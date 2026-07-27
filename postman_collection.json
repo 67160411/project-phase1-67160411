@@ -1,0 +1,823 @@
+{
+  "info": {
+    "_postman_id": "b2f58e41-ea05-49af-81f8-3a2495ae5036",
+    "name": "mini-rest-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56436300",
+    "_collection_link": "https://go.postman.co/collection/56436300-b2f58e41-ea05-49af-81f8-3a2495ae5036?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "GET /tasks",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": [
+        {
+          "name": "GET /tasks ดึงรายการทั้งหมด 200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "225"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"e1-RZx5xwFwb+u8SrJ3OtCiCnoQw3o\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:23:54 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"สำเร็จ\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"title\": \"ทำ mini-rest-api\",\n            \"dueDate\": \"2026-08-01\",\n            \"status\": \"pending\"\n        },\n        {\n            \"id\": 2,\n            \"title\": \"ส่งรายงานวิชา api\",\n            \"dueDate\": \"2026-08-05\",\n            \"status\": \"done\"\n        }\n    ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /tasks/1",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": [
+        {
+          "name": "GET /tasks/1 ดึงข้อมูลเฉพาะid 200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "125"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"7d-JUuEvbD/hDiNPNh6HCD6hRClJ98\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:18:12 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"สำเร็จ\",\n    \"data\": {\n        \"id\": 1,\n        \"title\": \"ทำ mini-rest-api\",\n        \"dueDate\": \"2026-08-01\",\n        \"status\": \"in-progress\"\n    }\n}"
+        },
+        {
+          "name": "GET /tasks/99 ดึงข้อมูลไม่พบ 404",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/90",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "90"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "56"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"38-g+LdA6RFTERNa+G1ybxSUyjr0OE\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:18:23 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"ไม่พบข้อมูลงาน\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "POST /task",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\r\n    \"dueDayta\": \"2026-08-26\",\r\n    \"status\": \"pending\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/tasks",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v1",
+            "tasks"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "POST /task เพิ่มข้อมูลใหม่ 201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\r\n    \"dueDate\": \"2026-08-26\",\r\n    \"status\": \"pending\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "203"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"cb-fdZT94WoZMc5YZB4dD1Jm5gtHBo\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:34:19 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"เพิ่มข้อมูลสำเร็จ\",\n    \"data\": {\n        \"id\": 3,\n        \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\n        \"dueDate\": \"2026-08-26\",\n        \"status\": \"pending\"\n    }\n}"
+        },
+        {
+          "name": "POST /task ข้อมูลไม่ครบ 400",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\r\n    \"dueDate\": \"2026-08-26\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "138"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"8a-jFcl0kad5LbIDDH5ymTVsmCv9yY\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:16:21 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"error\": {\n        \"code\": \"MISSING_FIELDS\",\n        \"message\": \"กรุณาระบุ title, dueDate และ status ให้ครบถ้วน\"\n    }\n}"
+        },
+        {
+          "name": "POST /task เพิ่มไม่ได้ ซ้ำ 409",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\r\n    \"dueDate\": \"2026-08-26\",\r\n    \"status\": \"pending\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "105"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"69-weCGNG+YOG8JAoWFh2YJkt/koDw\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:13:55 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"error\": {\n        \"code\": \"TASK_EXISTS\",\n        \"message\": \"มีชื่องานนี้อยู่แล้ว\"\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "PUT /tasks/1",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"title\": \"ทำ mini-rest-api\",\r\n    \"dueDate\": \"2026-08-01\",\r\n    \"status\": \"pending\"\r\n}   ",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/tasks/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "1"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "PUT /tasks/1 แก้ไขข้อมูลทั้งระเบียน 200",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำ mini-rest-api\",\r\n    \"dueDate\": \"2026-08-01\",\r\n    \"status\": \"in-progress\"\r\n}   ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "158"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"9e-J8zVeNZEseRsoj8rZyZiAz52xDQ\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:09:58 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"แก้ไขข้อมูลสำเร็จ\",\n    \"data\": {\n        \"id\": 1,\n        \"title\": \"ทำ mini-rest-api\",\n        \"dueDate\": \"2026-08-01\",\n        \"status\": \"in-progress\"\n    }\n}"
+        },
+        {
+          "name": "PUT /tasks/1 แก้ไม่ได้ข้อมูลไม่ครบ 400",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำ mini-rest-api\",\r\n    \"dueDate\": \"2026-08-01\"\r\n}   ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "138"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"8a-jFcl0kad5LbIDDH5ymTVsmCv9yY\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:19:34 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"error\": {\n        \"code\": \"MISSING_FIELDS\",\n        \"message\": \"กรุณาระบุ title, dueDate และ status ให้ครบถ้วน\"\n    }\n}"
+        },
+        {
+          "name": "PUT /task99 แก้ไม่ได้เพราะไม่เคยสร้างid99 404",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำงาน\",\r\n    \"dueDate\": \"2026-10-26\",\r\n    \"status\": \"in-progress\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/99",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "99"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "56"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"38-g+LdA6RFTERNa+G1ybxSUyjr0OE\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:27:36 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"ไม่พบข้อมูลงาน\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "DELETE /tasks/3",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": [
+        {
+          "name": "DELETE /tasks/3 ลบข้อมูล 200",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "3"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "56"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"38-gJRwyDqDbVBR9yGO43X2sCBpVwg\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:37:29 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"ลบข้อมูลสำเร็จ\"\n}"
+        },
+        {
+          "name": "DELETE /tasks/4 ไม่พบข้อมูล 404",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"ทำการบ้านวิชาภาษาอังกฤษ\",\r\n    \"dueDayta\": \"2026-08-26\",\r\n    \"status\": \"pending\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/tasks/4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "4"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "56"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"38-g+LdA6RFTERNa+G1ybxSUyjr0OE\""
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 27 Jul 2026 07:21:39 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=5"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"ไม่พบข้อมูลงาน\"\n}"
+        }
+      ]
+    }
+  ]
+}
