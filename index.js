@@ -13,7 +13,7 @@ app.listen(PORT, () => {
 });
 
 let tasks = [
-  { id: 1, title: "ทำ REST API", dueDate: "2026-08-01", status: "pending"},
+  { id: 1, title: "ทำ mini-rest-api", dueDate: "2026-08-01", status: "pending"},
   { id: 2, title: "ส่งรายงานวิชา api", dueDate: "2026-08-05", status: "done"}
 ];
 let nextId = 3;
@@ -40,12 +40,27 @@ app.post("/api/v1/tasks", (req, res) => {
   const { title, dueDate, status } = req.body;
 
   if (!title || !dueDate || !status) {
-    return res
-      .status(400)
-      .json({ message: "กรุณาระบุ title, dueDate และ status ให้ครบถ้วน" });
+    return res.status(400).json({
+        error: {
+            code: "MISSING_FIELDS",
+            message: "กรุณาระบุ title, dueDate และ status ให้ครบถ้วน"
+        }
+    });
+  }
+
+  const duplicate = tasks.find((t) => t.title === title);
+
+  if (duplicate) {
+    return res.status(409).json({
+      error: {
+        code: "TASK_EXISTS",
+        message: "มีชื่องานนี้อยู่แล้ว"
+      }
+    });
   }
 
   const newTask = { id: nextId++, title, dueDate, status };
+
   tasks.push(newTask);
 
   res.status(201).json({ message: "เพิ่มข้อมูลสำเร็จ", data: newTask });
@@ -64,7 +79,7 @@ app.put("/api/v1/tasks/:id", (req, res) => {
   if (!title || !dueDate || !status) {
     return res
       .status(400)
-      .json({ message: "กรุณาระบุ title, dueDate และ status ให้ครบถ้วน" });
+      .json({ error: { code: "MISSING_FIELDS", message: "กรุณาระบุ title, dueDate และ status ให้ครบถ้วน" } });
   }
 
   task.title = title;
