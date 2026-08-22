@@ -1,13 +1,24 @@
 const express = require("express");
 const app = express();
+const { graphqlHTTP } = require("express-graphql");
+const schema = require("./schema");
+const resolvers = require("./resolvers");
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+app.use(
+  "/graphql",
+  graphqlHTTP({
+    schema: schema,
+    rootValue: resolvers,
+    graphiql: true, // เปิดใช้งาน GraphiQL interface
+  }),
+);
+
 app.listen(PORT, () => {
   console.log(`Server กำลังทำงานที่ http://localhost:${PORT}`);
 });
-// สิ้นสุดของการตั้งค่าเซิร์ฟเวอร์
 
 // ข้อมูลของผู้ใช้และงานที่ต้องทำ (ตัวอย่างข้อมูล)
 let users = [
