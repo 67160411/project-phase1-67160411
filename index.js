@@ -82,9 +82,23 @@ app.get("/api/v1/tasks/:id", (req, res) => {
   const task = tasks.find((t) => t.id === id);
 
   if (!task) {
-    return res.status(404).json({ message: "ไม่พบข้อมูลงาน" });
+    return res.status(404).json({
+      error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" },
+    });
   }
 
+  // เช็กว่ามี ?include=user ส่งมาหรือไม่
+  const shouldIncludeUser = req.query.include === "user";
+
+  if (shouldIncludeUser) {
+    const user = users.find((u) => u.id === task.userId);
+    return res.status(200).json({
+      message: "สำเร็จ",
+      data: { ...task, user: user || null },
+    });
+  }
+
+  // ถ้าไม่มี ?include=user ให้ส่งแค่ข้อมูล task เพียวๆ
   res.status(200).json({ message: "สำเร็จ", data: task });
 });
 
