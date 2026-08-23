@@ -6,6 +6,8 @@ const cors = require("cors");
 const morgan = require("morgan");
 const { graphqlHTTP } = require("express-graphql");
 
+const pool = require("./db");
+
 // นำเข้า GraphQL Schema และ Resolvers
 const schema = require("./schema");
 const resolvers = require("./resolvers");
@@ -24,46 +26,6 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10kb" }));
 
-// ข้อมูลของผู้ใช้และงานที่ต้องทำ (ตัวอย่างข้อมูล)
-let users = [
-  { id: 1, name: "สมจิต", email: "somjit@example.com" },
-  { id: 2, name: "สมชาย", email: "somchai@example.com" },
-  { id: 3, name: "สมหญิง", email: "somying@example.com" },
-];
-
-let tasks = [
-  {
-    id: 1,
-    title: "ทำ project-phase1",
-    description: "ทำให้เสร็จภายในกำหนดเวลา",
-    category: "Project",
-    dueDate: "2026-08-01",
-    status: "in_progress",
-    userId: 1,
-  },
-  {
-    id: 2,
-    title: "ส่งรายงานวิชา api",
-    description: "ค้นคว้าและเขียนรายงานวิชา api",
-    category: "Project",
-    dueDate: "2026-08-05",
-    status: "pending",
-    userId: 2,
-  },
-  {
-    id: 3,
-    title: "สรุปสอบวิชา api",
-    description: "เตรียมตัวสอบวิชา api ให้พร้อม",
-    category: "Homework",
-    dueDate: "2026-07-18",
-    status: "done",
-    userId: 3,
-  },
-];
-
-let nextTaskId = 4;
-let nextUserId = 4;
-
 // GraphQL Endpoint
 app.use(
   "/graphql",
@@ -79,65 +41,75 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "project-phase1-67160411 พร้อมใช้งาน" });
 });
 
-// 1. GET: ดึงรายการงานทั้งหมด (รองรับ Query String ?category=...)
-app.get("/api/v1/tasks", (req, res) => {
-  const { category } = req.query;
+// ==========================================
+// TASKS API ROUTES (MySQL)
+// ==========================================
 
-  if (category) {
-    const filteredTasks = tasks.filter(
-      (t) => t.category.toLowerCase() === category.toLowerCase(),
-    );
-    return res.status(200).json({ message: "สำเร็จ", data: filteredTasks });
+// 1. GET: ดึงรายการงานทั้งหมด (รองรับ ?category=...)
+app.get("/api/v1/tasks", async (req, res, next) => {
+  try {
+    const { category } = req.query;
+    let query = "SELECT * FROM tasks";
+    let params = [];
+
+    if (category) {
+      query += " WHERE LOWER(category) = LOWER(?)";
+      params.push(category);
+    }
+
+    const [rows] = await pool.query(query, params);
+    res.status(200).json({ message: "สำเร็จ", data: rows });
+  } catch (err) {
+    next(err);
   }
-
-  res.status(200).json({ message: "สำเร็จ", data: tasks });
 });
 
-// 2. GET: ดึงข้อมูลงานตาม id
-app.get("/api/v1/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const task = tasks.find((t) => t.id === id);
+// 2. GET: ดึงข้อมูลงานตาม id (รองรับ ?include=user)
+app.get("/api/v1/tasks/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const shouldIncludeUser = req.query.include === "user";
 
-  if (!task) {
-    return res.status(404).json({
-      error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" },
-    });
+    let query = "SELECT * FROM tasks WHERE id = ?";
+    if (shouldIncludeUser) {
+      query = `
+        SELECT t.*, 
+               u.id AS user_id, u.name AS user_name, u.email AS user_email 
+        FROM tasks t 
+        LEFT JOIN users u ON t.userId = u.id 
+        WHERE t.id = ?
+      `;
+    }
+
+    const [rows] = await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" },
+      });
+    }
+
+    let resultData = rows[0];
+
+    // จัดโครงสร้าง response กรณีต้องการข้อมูล user
+    if (shouldIncludeUser) {
+      const { user_id, user_name, user_email, ...taskData } = rows[0];
+      resultData = {
+        ...taskData,
+        user: user_id
+          ? { id: user_id, name: user_name, email: user_email }
+          : null,
+      };
+    }
+
+    res.status(200).json({ message: "สำเร็จ", data: resultData });
+  } catch (err) {
+    next(err);
   }
-
-  // เช็กว่ามี ?include=user ส่งมาหรือไม่
-  const shouldIncludeUser = req.query.include === "user";
-
-  if (shouldIncludeUser) {
-    const user = users.find((u) => u.id === task.userId);
-    return res.status(200).json({
-      message: "สำเร็จ",
-      data: { ...task, user: user || null },
-    });
-  }
-
-  // ถ้าไม่มี ?include=user ให้ส่งแค่ข้อมูล task เพียวๆ
-  res.status(200).json({ message: "สำเร็จ", data: task });
-});
-
-// 2.1 GET: ดึงข้อมูลงานพร้อมข้อมูลผู้ใช้
-app.get("/api/v1/tasks/:id/full", (req, res) => {
-  const id = Number(req.params.id);
-  const task = tasks.find((t) => t.id === id);
-
-  if (!task) {
-    return res.status(404).json({ message: "ไม่พบข้อมูลงาน" });
-  }
-
-  const user = users.find((u) => u.id === task.userId);
-
-  res.status(200).json({
-    message: "สำเร็จ",
-    data: { ...task, user: user || null },
-  });
 });
 
 // 3. POST: เพิ่มข้อมูลงานใหม่
-app.post("/api/v1/tasks", (req, res) => {
+app.post("/api/v1/tasks", async (req, res, next) => {
   const { title, description, category, dueDate, status, userId } = req.body;
 
   if (!title || !dueDate || !status || !userId) {
@@ -149,50 +121,48 @@ app.post("/api/v1/tasks", (req, res) => {
     });
   }
 
-  const duplicate = tasks.find((t) => t.title === title);
-  if (duplicate) {
-    return res.status(409).json({
-      error: {
-        code: "TASK_EXISTS",
-        message: "มีชื่องานนี้อยู่แล้ว",
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO tasks (title, description, category, dueDate, status, userId) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        title,
+        description || "",
+        category || "General",
+        dueDate,
+        status,
+        userId,
+      ],
+    );
+
+    res.status(201).json({
+      message: "เพิ่มข้อมูลสำเร็จ",
+      data: {
+        id: result.insertId,
+        title,
+        description: description || "",
+        category: category || "General",
+        dueDate,
+        status,
+        userId: Number(userId),
       },
     });
+  } catch (err) {
+    if (
+      err.code === "ER_NO_REFERENCED_ROW_2" ||
+      err.code === "ER_NO_REFERENCED_ROW"
+    ) {
+      return res.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "ไม่พบข้อมูลผู้ใช้ในระบบ" },
+      });
+    }
+    next(err);
   }
-
-  const userExists = users.find((u) => u.id === Number(userId));
-  if (!userExists) {
-    return res.status(404).json({
-      error: {
-        code: "USER_NOT_FOUND",
-        message: "ไม่พบข้อมูลผู้ใช้",
-      },
-    });
-  }
-
-  const newTask = {
-    id: nextTaskId++,
-    title,
-    description: description || "",
-    category: category || "General",
-    dueDate,
-    status,
-    userId: Number(userId),
-  };
-
-  tasks.push(newTask);
-
-  res.status(201).json({ message: "เพิ่มข้อมูลสำเร็จ", data: newTask });
 });
 
 // 4. PUT: แก้ไขข้อมูลงานทั้งระเบียน
-app.put("/api/v1/tasks/:id", (req, res) => {
+app.put("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
   const { title, description, category, dueDate, status, userId } = req.body;
-  const task = tasks.find((t) => t.id === id);
-
-  if (!task) {
-    return res.status(404).json({ message: "ไม่พบข้อมูลงาน" });
-  }
 
   if (!title || !dueDate || !status || !userId) {
     return res.status(400).json({
@@ -203,71 +173,115 @@ app.put("/api/v1/tasks/:id", (req, res) => {
     });
   }
 
-  task.title = title;
-  task.description = description || "";
-  task.category = category || "General";
-  task.dueDate = dueDate;
-  task.status = status;
-  task.userId = Number(userId);
+  try {
+    const [result] = await pool.query(
+      "UPDATE tasks SET title = ?, description = ?, category = ?, dueDate = ?, status = ?, userId = ? WHERE id = ?",
+      [
+        title,
+        description || "",
+        category || "General",
+        dueDate,
+        status,
+        userId,
+        id,
+      ],
+    );
 
-  res.status(200).json({ message: "แก้ไขข้อมูลสำเร็จ", data: task });
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" } });
+    }
+
+    res.status(200).json({
+      message: "แก้ไขข้อมูลสำเร็จ",
+      data: { id, title, description, category, dueDate, status, userId },
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // 4.1 PATCH: แก้ไขข้อมูลงานบางฟิลด์
-app.patch("/api/v1/tasks/:id", (req, res) => {
+app.patch("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
-  const task = tasks.find((t) => t.id === id);
+  const updates = req.body;
 
-  if (!task) {
-    return res.status(404).json({
-      error: {
-        code: "NOT_FOUND",
-        message: "ไม่พบข้อมูลงาน",
-      },
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      error: { code: "NO_UPDATES", message: "กรุณาระบุข้อมูลที่ต้องการแก้ไข" },
     });
   }
 
-  const { title, description, category, dueDate, status, userId } = req.body;
+  try {
+    // สร้าง Dynamic Query สำหรับฟิลด์ที่ส่งมาแก้ไข
+    const fields = [];
+    const values = [];
 
-  if (title !== undefined) task.title = title;
-  if (description !== undefined) task.description = description;
-  if (category !== undefined) task.category = category;
-  if (dueDate !== undefined) task.dueDate = dueDate;
-  if (status !== undefined) task.status = status;
-  if (userId !== undefined) task.userId = Number(userId);
+    Object.keys(updates).forEach((key) => {
+      fields.push(`${key} = ?`);
+      values.push(updates[key]);
+    });
 
-  res.status(200).json({
-    message: "แก้ไขข้อมูลงานสำเร็จ",
-    data: task,
-  });
+    values.push(id); // สำหรับ WHERE id = ?
+
+    const [result] = await pool.query(
+      `UPDATE tasks SET ${fields.join(", ")} WHERE id = ?`,
+      values,
+    );
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" } });
+    }
+
+    const [updatedTask] = await pool.query("SELECT * FROM tasks WHERE id = ?", [
+      id,
+    ]);
+
+    res.status(200).json({
+      message: "แก้ไขข้อมูลงานสำเร็จ",
+      data: updatedTask[0],
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // 5. DELETE: ลบข้อมูลงาน
-app.delete("/api/v1/tasks/:id", (req, res) => {
+app.delete("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
-  const index = tasks.findIndex((t) => t.id === id);
 
-  if (index === -1) {
-    return res.status(404).json({ message: "ไม่พบข้อมูลงาน" });
+  try {
+    const [result] = await pool.query("DELETE FROM tasks WHERE id = ?", [id]);
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "ไม่พบข้อมูลงาน" } });
+    }
+
+    res.status(200).json({ message: "ลบข้อมูลสำเร็จ" });
+  } catch (err) {
+    next(err);
   }
-
-  tasks.splice(index, 1);
-
-  res.status(200).json({ message: "ลบข้อมูลสำเร็จ" });
 });
 
-// 404: ไม่พบ route ที่ร้องขอ (ต้องอยู่หลัง route ทั้งหมด)
+// ------------------------------------------
+// MIDDLEWARES
+// ------------------------------------------
+
+// 404: ไม่พบ route ที่ร้องขอ
 app.use((req, res) => {
   res.status(404).json({
     error: { code: "ROUTE_NOT_FOUND", message: "ไม่พบเส้นทางที่ร้องขอ" },
   });
 });
 
-// Error-handling middleware (ต้องมีพารามิเตอร์ 4 ตัวเสมอ)
+// Error-handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  // ใช้ err.status/err.statusCode หากมี (เช่น PayloadTooLargeError จาก express.json ที่ส่งมาเป็น 413)
-  // เพื่อไม่ให้ error ที่มีรหัสสถานะของตัวเองถูกกลบด้วย 500 เสมอไป
   const statusCode = err.status || err.statusCode || 500;
   res.status(statusCode).json({
     error: {
