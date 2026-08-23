@@ -256,6 +256,30 @@ app.delete("/api/v1/tasks/:id", (req, res) => {
   res.status(200).json({ message: "ลบข้อมูลสำเร็จ" });
 });
 
+// 404: ไม่พบ route ที่ร้องขอ (ต้องอยู่หลัง route ทั้งหมด)
+app.use((req, res) => {
+  res.status(404).json({
+    error: { code: "ROUTE_NOT_FOUND", message: "ไม่พบเส้นทางที่ร้องขอ" },
+  });
+});
+
+// Error-handling middleware (ต้องมีพารามิเตอร์ 4 ตัวเสมอ)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  // ใช้ err.status/err.statusCode หากมี (เช่น PayloadTooLargeError จาก express.json ที่ส่งมาเป็น 413)
+  // เพื่อไม่ให้ error ที่มีรหัสสถานะของตัวเองถูกกลบด้วย 500 เสมอไป
+  const statusCode = err.status || err.statusCode || 500;
+  res.status(statusCode).json({
+    error: {
+      code: statusCode === 500 ? "INTERNAL_SERVER_ERROR" : err.type || "ERROR",
+      message:
+        statusCode === 500
+          ? "เกิดข้อผิดพลาดที่ไม่คาดคิดภายในระบบ"
+          : err.message,
+    },
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server กำลังทำงานที่ http://localhost:${PORT}`);
 });
