@@ -1,11 +1,28 @@
+require("dotenv").config();
+
 const express = require("express");
-const app = express();
+const helmet = require("helmet");
+const cors = require("cors");
+const morgan = require("morgan");
 const { graphqlHTTP } = require("express-graphql");
+
+// นำเข้า GraphQL Schema และ Resolvers
 const schema = require("./schema");
 const resolvers = require("./resolvers");
+
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// ตั้งค่า Middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGIN || "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  }),
+);
+app.use(morgan("dev"));
+app.use(express.json({ limit: "10kb" }));
 
 // ข้อมูลของผู้ใช้และงานที่ต้องทำ (ตัวอย่างข้อมูล)
 let users = [
