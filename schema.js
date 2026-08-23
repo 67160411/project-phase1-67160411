@@ -7,15 +7,22 @@ const schema = buildSchema(`
     email: String!
   }
 
+  type Category {
+    id: ID!
+    name: String!
+    description: String
+  }
+
   type Task {
     id: ID!
     title: String!
-    description: String!
-    category: String!
+    description: String
     dueDate: String!
     status: String!
     userId: ID!
+    categoryId: ID!
     user: User
+    category: Category
   }
 
   type Query {
@@ -23,6 +30,8 @@ const schema = buildSchema(`
     tasks: [Task!]!
     user(id: ID!): User
     users: [User!]!
+    category(id: ID!): Category
+    categories: [Category!]!
   }
 `);
 

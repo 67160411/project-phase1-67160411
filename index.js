@@ -45,16 +45,23 @@ app.get("/", (req, res) => {
 // TASKS API ROUTES (MySQL)
 // ==========================================
 
-// 1. GET: ดึงรายการงานทั้งหมด (รองรับ ?category=...)
+// 1. GET: ดึงรายการงานทั้งหมด (รองรับ ?category=... หรือ ?category_id=...)
 app.get("/api/v1/tasks", async (req, res, next) => {
   try {
-    const { category } = req.query;
-    let query = "SELECT * FROM tasks";
+    const { category, category_id } = req.query;
+    let query = `
+      SELECT t.*, c.name AS category_name 
+      FROM tasks t 
+      LEFT JOIN categories c ON t.category_id = c.id
+    `;
     let params = [];
 
     if (category) {
-      query += " WHERE LOWER(category) = LOWER(?)";
+      query += " WHERE LOWER(c.name) = LOWER(?)";
       params.push(category);
+    } else if (category_id) {
+      query += " WHERE t.category_id = ?";
+      params.push(category_id);
     }
 
     const [rows] = await pool.query(query, params);
@@ -64,22 +71,19 @@ app.get("/api/v1/tasks", async (req, res, next) => {
   }
 });
 
-// 2. GET: ดึงข้อมูลงานตาม id (รองรับ ?include=user)
+// 2. GET: ดึงข้อมูลงานตาม id (รองรับ ?include=user,category)
 app.get("/api/v1/tasks/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const shouldIncludeUser = req.query.include === "user";
-
-    let query = "SELECT * FROM tasks WHERE id = ?";
-    if (shouldIncludeUser) {
-      query = `
-        SELECT t.*, 
-               u.id AS user_id, u.name AS user_name, u.email AS user_email 
-        FROM tasks t 
-        LEFT JOIN users u ON t.userId = u.id 
-        WHERE t.id = ?
-      `;
-    }
+    const query = `
+      SELECT t.*, 
+             u.id AS u_id, u.name AS u_name, u.email AS u_email,
+             c.id AS c_id, c.name AS c_name, c.description AS c_description
+      FROM tasks t 
+      LEFT JOIN users u ON t.user_id = u.id 
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.id = ?
+    `;
 
     const [rows] = await pool.query(query, [id]);
 
@@ -89,20 +93,25 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
       });
     }
 
-    let resultData = rows[0];
+    const row = rows[0];
+    const taskData = {
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      due_date: row.due_date,
+      status: row.status,
+      user_id: row.user_id,
+      category_id: row.category_id,
+      created_at: row.created_at,
+      user: row.u_id
+        ? { id: row.u_id, name: row.u_name, email: row.u_email }
+        : null,
+      category: row.c_id
+        ? { id: row.c_id, name: row.c_name, description: row.c_description }
+        : null,
+    };
 
-    // จัดโครงสร้าง response กรณีต้องการข้อมูล user
-    if (shouldIncludeUser) {
-      const { user_id, user_name, user_email, ...taskData } = rows[0];
-      resultData = {
-        ...taskData,
-        user: user_id
-          ? { id: user_id, name: user_name, email: user_email }
-          : null,
-      };
-    }
-
-    res.status(200).json({ message: "สำเร็จ", data: resultData });
+    res.status(200).json({ message: "สำเร็จ", data: taskData });
   } catch (err) {
     next(err);
   }
@@ -110,28 +119,23 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
 
 // 3. POST: เพิ่มข้อมูลงานใหม่
 app.post("/api/v1/tasks", async (req, res, next) => {
-  const { title, description, category, dueDate, status, userId } = req.body;
+  const { title, description, due_date, status, user_id, category_id } =
+    req.body;
 
-  if (!title || !dueDate || !status || !userId) {
+  if (!title || !due_date || !status || !user_id || !category_id) {
     return res.status(400).json({
       error: {
         code: "MISSING_FIELDS",
-        message: "กรุณาระบุ title, dueDate, status และ userId ให้ครบถ้วน",
+        message:
+          "กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน",
       },
     });
   }
 
   try {
     const [result] = await pool.query(
-      "INSERT INTO tasks (title, description, category, dueDate, status, userId) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        title,
-        description || "",
-        category || "General",
-        dueDate,
-        status,
-        userId,
-      ],
+      "INSERT INTO tasks (title, description, due_date, status, user_id, category_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [title, description || "", due_date, status, user_id, category_id],
     );
 
     res.status(201).json({
@@ -140,10 +144,10 @@ app.post("/api/v1/tasks", async (req, res, next) => {
         id: result.insertId,
         title,
         description: description || "",
-        category: category || "General",
-        dueDate,
+        due_date,
         status,
-        userId: Number(userId),
+        user_id: Number(user_id),
+        category_id: Number(category_id),
       },
     });
   } catch (err) {
@@ -152,7 +156,10 @@ app.post("/api/v1/tasks", async (req, res, next) => {
       err.code === "ER_NO_REFERENCED_ROW"
     ) {
       return res.status(404).json({
-        error: { code: "USER_NOT_FOUND", message: "ไม่พบข้อมูลผู้ใช้ในระบบ" },
+        error: {
+          code: "FOREIGN_KEY_NOT_FOUND",
+          message: "ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ",
+        },
       });
     }
     next(err);
@@ -162,29 +169,23 @@ app.post("/api/v1/tasks", async (req, res, next) => {
 // 4. PUT: แก้ไขข้อมูลงานทั้งระเบียน
 app.put("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
-  const { title, description, category, dueDate, status, userId } = req.body;
+  const { title, description, due_date, status, user_id, category_id } =
+    req.body;
 
-  if (!title || !dueDate || !status || !userId) {
+  if (!title || !due_date || !status || !user_id || !category_id) {
     return res.status(400).json({
       error: {
         code: "MISSING_FIELDS",
-        message: "กรุณาระบุ title, dueDate, status และ userId ให้ครบถ้วน",
+        message:
+          "กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน",
       },
     });
   }
 
   try {
     const [result] = await pool.query(
-      "UPDATE tasks SET title = ?, description = ?, category = ?, dueDate = ?, status = ?, userId = ? WHERE id = ?",
-      [
-        title,
-        description || "",
-        category || "General",
-        dueDate,
-        status,
-        userId,
-        id,
-      ],
+      "UPDATE tasks SET title = ?, description = ?, due_date = ?, status = ?, user_id = ?, category_id = ? WHERE id = ?",
+      [title, description || "", due_date, status, user_id, category_id, id],
     );
 
     if (result.affectedRows === 0) {
@@ -195,7 +196,7 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
 
     res.status(200).json({
       message: "แก้ไขข้อมูลสำเร็จ",
-      data: { id, title, description, category, dueDate, status, userId },
+      data: { id, title, description, due_date, status, user_id, category_id },
     });
   } catch (err) {
     next(err);
@@ -214,7 +215,6 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
   }
 
   try {
-    // สร้าง Dynamic Query สำหรับฟิลด์ที่ส่งมาแก้ไข
     const fields = [];
     const values = [];
 
@@ -223,7 +223,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
       values.push(updates[key]);
     });
 
-    values.push(id); // สำหรับ WHERE id = ?
+    values.push(id);
 
     const [result] = await pool.query(
       `UPDATE tasks SET ${fields.join(", ")} WHERE id = ?`,

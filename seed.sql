@@ -1,41 +1,47 @@
 USE project_phase1;
 
--- เพิ่มข้อมูลผู้ใช้
+-- 1. เพิ่มข้อมูลผู้ใช้ (Users) - 3 ระเบียน
 INSERT INTO users (name, email) VALUES
   ('สมจิต', 'somjit@example.com'),
   ('สมชาย', 'somchai@example.com'),
   ('สมหญิง', 'somying@example.com');
 
--- เพิ่มข้อมูลงาน
+-- 2. เพิ่มข้อมูลหมวดหมู่งาน (Categories) - 3 ระเบียน
+INSERT INTO categories (name, description) VALUES
+  ('Project', 'งานโปรเจกต์และโครงงานต่างๆ'),
+  ('Homework', 'การบ้านและการเตรียมตัวสอบ'),
+  ('General', 'งานทั่วไปและธุระส่วนตัว');
+
+-- 3. เพิ่มข้อมูลงาน (Tasks) - 3 ระเบียน (ใช้อ้างอิง category_id แทนการพิมพ์ชื่อหมวดหมู่)
 INSERT INTO tasks (
   title,
   description,
-  category,
   due_date,
   status,
-  user_id
+  user_id,
+  category_id
 ) VALUES
   (
     'ทำ project-phase1',
     'ทำให้เสร็จภายในกำหนดเวลา',
-    'Project',
     '2026-08-01',
     'in_progress',
-    1
+    1,
+    1  -- อ้างอิงถึง Category: Project
   ),
   (
     'ส่งรายงานวิชา api',
     'ค้นคว้าและเขียนรายงานวิชา api',
-    'Project',
     '2026-08-05',
     'pending',
-    2
+    2,
+    1  -- อ้างอิงถึง Category: Project
   ),
   (
     'สรุปสอบวิชา api',
     'เตรียมตัวสอบวิชา api ให้พร้อม',
-    'Homework',
     '2026-07-18',
     'done',
-    3
+    3,
+    2  -- อ้างอิงถึง Category: Homework
   );
