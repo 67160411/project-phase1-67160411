@@ -36,20 +36,43 @@
 
 ## รายการ Resource หลักของระบบ (Core Resources & Entities)
 
-### 1. รายละเอียดของแต่ละ Resource
+#### 1. Users
 
-- **User (ข้อมูลผู้ใช้งาน):** จัดเก็บข้อมูลบุคคลผู้ใช้งานในระบบ
-  - **Attributes:** `id`, `name`, `email`, `created_at`
-- **Category (ข้อมูลหมวดหมู่งาน):** จัดเก็บหมวดหมู่สำหรับจำแนกประเภทงาน (เช่น Project, Homework, General)
-  - **Attributes:** `id`, `name`, `description`, `created_at`
-- **Task (ข้อมูลรายการงาน / สิ่งต้องทำ):** จัดเก็บรายละเอียดงาน กำหนดส่ง สถานะงาน และความสัมพันธ์ไปยังผู้ใช้และหมวดหมู่
-  - **Attributes:** `id`, `title`, `description`, `due_date`, `status`, `user_id`, `category_id`, `created_at`
+- **Resource:** `users`
+- **คำอธิบาย:** ข้อมูลผู้ใช้งานระบบ
+- **Primary Key:** `id`
+- **ข้อมูลหลัก:** `name`, `email`, `created_at`
 
----
+#### 2. Categories
 
-### 2. ความสัมพันธ์ระหว่าง Resource (Resource Relationships)
+- **Resource:** `categories`
+- **คำอธิบาย:** ข้อมูลหมวดหมู่ของงาน
+- **Primary Key:** `id`
+- **ข้อมูลหลัก:** `name`, `description`, `created_at`
 
-| Resource ฝั่ง A | ความสัมพันธ์ (Relationship) | Resource ฝั่ง B | คำอธิบายความสัมพันธ์                                                                                                                                                        |
-| :-------------- | :-------------------------- | :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **User**        | **1 : N** (One-to-Many)     | **Task**        | ผู้ใช้งาน 1 คน (`users`) สามารถสร้างหรือรับผิดชอบงานได้หลายรายการ (`tasks`) แต่งาน 1 ชิ้น จะมีผู้รับผิดชอบหลักเพียงคนเดียว (เชื่อมโยงด้วย Foreign Key: `user_id`)           |
-| **Category**    | **1 : N** (One-to-Many)     | **Task**        | หมวดหมู่ 1 หมวด (`categories`) สามารถมีรายการงานสังกัดอยู่ได้หลายงาน (`tasks`) แต่งาน 1 ชิ้น จะสังกัดหมวดหมู่หลักได้เพียง 1 หมวด (เชื่อมโยงด้วย Foreign Key: `category_id`) |
+#### 3. Tasks
+
+- **Resource:** `tasks`
+- **คำอธิบาย:** ข้อมูลรายการงานที่ผู้ใช้สร้างและจัดการ
+- **Primary Key:** `id`
+- **Foreign Keys:** `user_id`, `category_id`
+- **ข้อมูลหลัก:** `title`, `description`, `due_date`, `status`, `user_id`, `category_id`, `created_at`
+
+### ความสัมพันธ์ระหว่าง Resource
+
+| Resource ต้นทาง | ความสัมพันธ์      | Resource ปลายทาง | รายละเอียด                            |
+| --------------- | ----------------- | ---------------- | ------------------------------------- |
+| `users`         | 1:N (One-to-Many) | `tasks`          | ผู้ใช้ 1 คนสามารถมีงานได้หลายงาน      |
+| `tasks`         | N:1 (Many-to-One) | `users`          | งานหลายงานสามารถเป็นของผู้ใช้ 1 คน    |
+| `categories`    | 1:N (One-to-Many) | `tasks`          | หมวดหมู่ 1 หมวดสามารถมีงานได้หลายงาน  |
+| `tasks`         | N:1 (Many-to-One) | `categories`     | งานหลายงานสามารถอยู่ในหมวดหมู่ 1 หมวด |
+
+### สรุปโครงสร้างความสัมพันธ์
+
+```text
+users (1) ──────────── (N) tasks (N) ──────────── (1) categories
+```
+
+- `users.id` เชื่อมกับ `tasks.user_id`
+- `categories.id` เชื่อมกับ `tasks.category_id`
+- `tasks` เป็นตารางที่เชื่อมความสัมพันธ์ระหว่างผู้ใช้งานและหมวดหมู่ของงาน
