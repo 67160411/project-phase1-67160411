@@ -1,43 +1,66 @@
-# Failure Scenario Test Results Report
+# Failure Scenario Test Results
 
-**Project Phase:** Phase 2 - API Documentation & Fault Tolerance (Resilience)  
-**Target Component:** External Notification API Service (`notificationService.js`)  
-**Tested Date:** October 12, 2026  
-**Status:** PASSED (All 3 Test Cases Executed Successfully)
+## 1. วัตถุประสงค์
 
----
+ทดสอบการทำงานของระบบเมื่อ API ภายนอกไม่สามารถใช้งานได้ เพื่อดูว่าระบบสามารถลองเรียก API ซ้ำ (Retry) จัดการเมื่อ API ตอบสนองช้า (Timeout) และใช้ข้อมูลสำรอง (Fallback) ได้หรือไม่
 
-## 1. Overview & Resilience Architecture
+## 2. ผลการทดสอบ
 
-ระบบถูกออกแบบให้เชื่อมต่อกับบริการส่งการแจ้งเตือนภายนอก (External Email/SMS Provider) เมื่อมีการสร้างหรือแก้ไขข้อมูลในระบบ (`/api/v1/tasks`) โดยติดตั้งกลไก Resilience เพื่อรองรับความผิดพลาด ดังนี้:
+### กรณีที่ 1: เรียก API ภายนอกได้ตามปกติ
 
-1. **Retry Logic:** เมื่อเกิด Network Error หรือ HTTP Status 5xx ระบบจะทำการส่งซ้ำอัตโนมัติ **2 ครั้ง** โดยใช้เว้นระยะแบบ **Exponential Backoff**
-2. **Timeout Control:** กำหนดเวลาสูงสุดในการรอคำตอบจาก API ภายนอกไม่เกิน **3,000 ms (3 วินาที)**
-3. **Fallback Mechanism:** เมื่อทำการ Retry ครบ 2 ครั้งแล้วยังล้มเหลว ระบบจะทำการบันทึกข้อมูลเข้าคิวสำรองภายใน (`internal_system_log`) พร้อมแจ้งเตือนผู้ใช้งานอย่างเหมาะสม โดยกระบวนการหลัก (การสร้าง/แก้ไข Task ลง MySQL) จะไม่ Crash หรือค้าง
+**วิธีทดสอบ**
 
----
+- ตั้งค่า URL เป็น `https://jsonplaceholder.typicode.com/todos/1`
+- เรียก `GET /api/external/todo` ผ่าน Postman
 
-## 2. Test Cases Summary Matrix
+**ผลที่ได้**
 
-|  Case ID  | Test Scenario                                      | Simulation Method                                                                                                     | Expected Behavior                                                                                                                  | Actual Result                                                                                                                 |   Status   |
-| :-------: | :------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :--------: |
-| **TC-01** | **Network Connection Error / Target Service Down** | เปลี่ยน `baseURL` ใน `notificationService.js` เป็น URL ที่ไม่มีอยู่จริง (`https://invalid-notification-gateway.test`) | 1. ตรวจจับ Network Error<br>2. พยายาม Retry รวม 2 ครั้ง<br>3. สลับเข้า Fallback Queue<br>4. บันทึก Task ลง MySQL สำเร็จ (HTTP 201) | - ระบบทำ Retry ครบ 2 รอบ<br>- Response ตอบกลับ `notification_status: "queued_in_fallback"`<br>- เพิ่ม Task ลง Database สำเร็จ | **PASSED** |
-| **TC-02** | **External API Response Timeout**                  | ตั้งค่า `timeout: 1` ms ใน Axios Instance เพื่อบังคับให้ Request หมดเวลาก่อน Response คืนมา                           | 1. ตรวจจับ `ECONNABORTED`<br>2. Retry รวม 2 ครั้ง<br>3. สลับเข้า Fallback Queue<br>4. ตอบกลับ HTTP 201/200 ปกติ                    | - ตรวจพบ Timeout และสั่ง Retry 2 รอบ<br>- สลับไปใช้ Fallback ไม่เกิด Unhandled Rejection หรือทำให้ API ค้าง                   | **PASSED** |
-| **TC-03** | **External Provider 500/503 Server Error**         | จำลองการยิง Request ไปยัง Endpoint ที่ส่งคืน HTTP Status `503 Service Unavailable`                                    | 1. ตรวจจับ Status 5xx<br>2. Retry ซ้ำ 2 ครั้งตาม Exponential Delay<br>3. สลับเข้า Fallback Queue                                   | - ระบบเว้นระยะห่างในการ Retry 2 รอบ<br>- ตอบกลับผู้ใช้สำเร็จพร้อม Warning Message โดยไม่หลุด Error 500                        | **PASSED** |
+ระบบสามารถดึงข้อมูลจาก API ภายนอกได้สำเร็จ โดยมี `source` เป็น `external-api` และได้รับข้อมูล Todo กลับมา
 
----
+**สรุปผล:** ผ่าน
 
-## 3. Detailed Test Execution & Logs
+### กรณีที่ 2: API ภายนอกไม่สามารถใช้งานได้
 
-### 📍 TC-01: Network Error & Service Down Scenario
+**วิธีทดสอบ**
 
-- **Action:** ส่ง HTTP Request `POST /api/v1/tasks` เพื่อสร้าง Task ใหม่
-- **Server Log Output:**
+- เปลี่ยน URL ในไฟล์ `.env` เป็น `https://does-not-exist.invalid/todos/1`
+- รีสตาร์ตเซิร์ฟเวอร์
+- เรียก `GET /api/external/todo` ผ่าน Postman
 
-```text
-[RETRY] Notification API ล้มเหลว พยายามส่งซ้ำครั้งที่ #1...
-[RETRY] Notification API ล้มเหลว พยายามส่งซ้ำครั้งที่ #2...
-[EXTERNAL_NOTIFICATION_ERROR] getaddrinfo ENOTFOUND invalid-notification-gateway.test
-[FALLBACK QUEUED] บันทึกการแจ้งเตือน Task ID 108 ลงระบบสำรองภายในสำเร็จ
-POST /api/v1/tasks 201 1245.321 ms - 412
-```
+**ผลที่ได้**
+
+ระบบไม่สามารถเรียก API ภายนอกได้ จึงใช้ข้อมูลสำรองแทน โดยผลลัพธ์ใน Postman แสดง `"source": "fallback"` และมีข้อความแจ้งว่าข้อมูลที่ได้รับเป็นข้อมูลสำรอง
+
+**สรุปผล:** ผ่านในส่วนของ Fallback
+
+### กรณีที่ 3: ทดสอบการเรียก API ซ้ำ (Retry)
+
+**วิธีทดสอบ**
+
+- ใช้ URL ที่ไม่สามารถเรียกใช้งานได้
+- เรียก `GET /api/external/todo`
+- ตรวจสอบข้อความใน Terminal
+
+**ผลที่ได้**
+
+ระบบถูกตั้งค่าให้ลองเรียก API ได้สูงสุด 3 ครั้ง และมีการหน่วงเวลาก่อนลองใหม่ โดยครั้งแรกหน่วงเวลา 500 มิลลิวินาที และครั้งถัดไป 1,000 มิลลิวินาที
+
+**สรุปผล:** ต้องตรวจสอบข้อความจริงใน Terminal เพื่อยืนยันว่าระบบลองเรียกครบทั้ง 3 ครั้ง
+
+### กรณีที่ 4: ทดสอบ Timeout
+
+**วิธีทดสอบ**
+
+- ใช้ API ทดสอบที่ตอบกลับช้าประมาณ 5 วินาที
+- ระบบกำหนดเวลา Timeout ไว้ 3 วินาทีต่อการเรียกหนึ่งครั้ง
+- เรียก `GET /api/external/todo` ผ่าน Postman แล้วตรวจสอบผลลัพธ์
+
+**ผลที่ได้**
+
+ระบบควรหยุดรอเมื่อเกินเวลาที่กำหนด และลองเรียก API ใหม่ตามจำนวนครั้งที่ตั้งไว้ หากยังไม่สำเร็จ ระบบจะใช้ข้อมูลสำรองแทน
+
+**สรุปผล:** ต้องทดสอบจริงและตรวจสอบผลใน Terminal กับ Postman ก่อนยืนยันว่าผ่าน
+
+## 3. สรุปผลการทดสอบ
+
+จากการทดสอบพบว่า ระบบสามารถเรียก API ภายนอกที่ใช้งานได้ตามปกติ และเมื่อ API ไม่สามารถใช้งานได้ ระบบสามารถใช้ข้อมูลสำรองแทนได้ ส่วนการทำงานของ Retry และ Timeout ต้องตรวจสอบผลการทดสอบจริงเพิ่มเติม เพื่อให้แน่ใจว่าระบบทำงานได้ตามที่ออกแบบไว้

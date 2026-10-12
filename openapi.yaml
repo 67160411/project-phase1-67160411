@@ -2,20 +2,21 @@ openapi: 3.0.3
 info:
   title: Task Management API
   version: 1.0.0
-  description: |
-    API สำหรับจัดการงานในโครงงาน
+  description: "API สำหรับจัดการงานในโครงงาน
+
     ครอบคลุมการอ่าน เพิ่ม แก้ไข และลบข้อมูล Tasks
 
+    "
 servers:
   - url: http://localhost:3000
     description: Local development server
-
 tags:
   - name: General
     description: API ทั่วไป
   - name: Tasks
     description: API สำหรับจัดการงาน
-
+  - name: External API
+    description: การเรียกใช้ API ภายนอกพร้อมกลไก fallback
 paths:
   /:
     get:
@@ -37,9 +38,30 @@ paths:
                   message:
                     type: string
                     example: project-phase1-67160411 พร้อมใช้งาน
+                  endpoints:
+                    type: object
+                    properties:
+                      tasks:
+                        type: string
+                        example: /api/v1/tasks
+                      externalTodo:
+                        type: string
+                        example: /api/external/todo
+                      graphql:
+                        type: string
+                        example: /graphql
+                      swagger:
+                        type: string
+                        example: /api-docs
+              example:
+                message: project-phase1-67160411 พร้อมใช้งาน
+                endpoints:
+                  tasks: /api/v1/tasks
+                  externalTodo: /api/external/todo
+                  graphql: /graphql
+                  swagger: /api-docs
         "500":
           $ref: "#/components/responses/InternalServerError"
-
   /api/v1/tasks:
     get:
       tags:
@@ -103,7 +125,6 @@ paths:
                   message: category_id ต้องเป็นตัวเลขจำนวนเต็ม
         "500":
           $ref: "#/components/responses/InternalServerError"
-
     post:
       tags:
         - Tasks
@@ -161,7 +182,6 @@ paths:
                   message: ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ
         "500":
           $ref: "#/components/responses/InternalServerError"
-
   /api/v1/tasks/{id}:
     parameters:
       - name: id
@@ -172,7 +192,6 @@ paths:
           type: integer
           minimum: 1
         example: 1
-
     get:
       tags:
         - Tasks
@@ -217,7 +236,6 @@ paths:
                   message: ไม่พบข้อมูลงาน
         "500":
           $ref: "#/components/responses/InternalServerError"
-
     put:
       tags:
         - Tasks
@@ -275,7 +293,6 @@ paths:
                   message: ไม่พบข้อมูลงาน
         "500":
           $ref: "#/components/responses/InternalServerError"
-
     patch:
       tags:
         - Tasks
@@ -328,7 +345,6 @@ paths:
                   message: ไม่พบข้อมูลงาน
         "500":
           $ref: "#/components/responses/InternalServerError"
-
     delete:
       tags:
         - Tasks
@@ -370,7 +386,68 @@ paths:
                   message: ไม่พบข้อมูลงาน
         "500":
           $ref: "#/components/responses/InternalServerError"
-
+  /api/external/todo:
+    get:
+      tags:
+        - External API
+      summary: ดึงข้อมูล Todo จาก External API
+      description: เรียก External API ผ่าน service ซึ่งมี retry/timeout และคืนข้อมูล fallback หากบริการภายนอกไม่พร้อมใช้งาน
+      operationId: getExternalTodo
+      responses:
+        "200":
+          description: ได้ข้อมูลจาก External API หรือข้อมูลสำรองเมื่อเรียกบริการภายนอกไม่สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                  success:
+                    type: boolean
+                  source:
+                    type: string
+                    enum:
+                      - external_api
+                      - fallback
+                  warning:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: integer
+                      id:
+                        type: integer
+                      title:
+                        type: string
+                      completed:
+                        type: boolean
+                    additionalProperties: true
+                additionalProperties: true
+              examples:
+                externalSuccess:
+                  summary: External API สำเร็จ
+                  value:
+                    message: ดึงข้อมูลจาก External API สำเร็จ
+                    userId: 1
+                    id: 1
+                    title: delectus aut autem
+                    completed: false
+                fallback:
+                  summary: ใช้ข้อมูลสำรอง
+                  value:
+                    message: External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน
+                    success: true
+                    source: fallback
+                    warning: ข้อมูลนี้เป็นข้อมูลสำรอง ไม่ใช่ข้อมูลสดจาก API
+                    data:
+                      userId: 1
+                      id: 1
+                      title: ตัวอย่างข้อมูลสำรอง
+                      completed: false
 components:
   responses:
     InternalServerError:
@@ -383,7 +460,6 @@ components:
             error:
               code: INTERNAL_SERVER_ERROR
               message: เกิดข้อผิดพลาดที่ไม่คาดคิดภายในระบบ
-
   schemas:
     TaskStatus:
       type: string
@@ -392,7 +468,6 @@ components:
         - in_progress
         - done
       example: pending
-
     TaskInput:
       type: object
       required:
@@ -421,7 +496,6 @@ components:
         category_id:
           type: integer
           example: 1
-
     TaskPatchInput:
       type: object
       minProperties: 1
@@ -445,7 +519,6 @@ components:
         category_id:
           type: integer
           example: 1
-
     TaskWriteResponse:
       type: object
       properties:
@@ -471,7 +544,6 @@ components:
         category_id:
           type: integer
           example: 1
-
     Task:
       type: object
       properties:
@@ -501,7 +573,6 @@ components:
           type: string
           format: date-time
           example: "2026-07-01T10:00:00.000Z"
-
     TaskDetail:
       allOf:
         - $ref: "#/components/schemas/Task"
@@ -535,7 +606,6 @@ components:
                   type: string
                   nullable: true
                   example: หมวดหมู่สำหรับงานโครงการ
-
     ErrorResponse:
       type: object
       required:

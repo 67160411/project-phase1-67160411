@@ -10,10 +10,13 @@ const YAML = require("yaml");
 const fs = require("fs");
 const path = require("path");
 
-const pool = require("../db");
+const pool = require("./db");
 const schema = require("../schema");
 const resolvers = require("../resolvers");
-const { sendTaskNotification } = require("./services/external-api");
+const {
+  sendTaskNotification,
+  getExternalTodo,
+} = require("./services/external-api");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,20 +25,10 @@ const PORT = process.env.PORT || 3000;
 // SWAGGER / OPENAPI
 // ==========================================
 
-// openapi.yaml อยู่ในโฟลเดอร์หลักของโปรเจกต์
 const openapiPath = path.join(__dirname, "..", "openapi.yaml");
+const openapiFile = fs.readFileSync(openapiPath, "utf8");
 
-if (!fs.existsSync(openapiPath)) {
-  throw new Error(`ไม่พบไฟล์ OpenAPI: ${openapiPath}`);
-}
-
-const openapiDocument = YAML.parse(fs.readFileSync(openapiPath, "utf8"));
-
-if (!openapiDocument || !openapiDocument.openapi) {
-  throw new Error("ไฟล์ openapi.yaml ไม่ใช่ OpenAPI Specification ที่ถูกต้อง");
-}
-
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(YAML.parse(openapiFile)));
 
 // ==========================================
 // MIDDLEWARES
@@ -67,8 +60,7 @@ function sendError(res, status, code, message) {
   });
 }
 
-// ป้องกันปัญหาการส่ง Notification ล้มเหลว
-// หลังจากบันทึกข้อมูลลงฐานข้อมูลสำเร็จแล้ว
+// ป้องกันไม่ให้การส่ง Notification ทำให้ API หลักล้มเหลว
 async function notifySafely(task, event) {
   try {
     return await sendTaskNotification(task, event);
@@ -100,14 +92,49 @@ app.use(
 // ==========================================
 
 app.get("/", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     message: "project-phase1-67160411 พร้อมใช้งาน",
     endpoints: {
       tasks: "/api/v1/tasks",
+      externalTodo: "/api/external/todo",
       graphql: "/graphql",
       swagger: "/api-docs",
     },
   });
+});
+
+// ==========================================
+// EXTERNAL API WITH RETRY / TIMEOUT / FALLBACK
+// IMPORTANT: This route must be before the 404 handler.
+// ==========================================
+
+app.get("/api/external/todo", async (req, res) => {
+  try {
+    const result = await getExternalTodo();
+
+    return res.status(200).json({
+      message: "ดึงข้อมูลจาก External API สำเร็จ",
+      ...result,
+    });
+  } catch (error) {
+    console.error(
+      "[Fallback] External API failed after retries:",
+      error.message,
+    );
+
+    return res.status(200).json({
+      message: "External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน",
+      success: true,
+      source: "fallback",
+      warning: "ข้อมูลนี้เป็นข้อมูลสำรอง ไม่ใช่ข้อมูลสดจาก API",
+      data: {
+        userId: 1,
+        id: 1,
+        title: "ตัวอย่างข้อมูลสำรอง",
+        completed: false,
+      },
+    });
+  }
 });
 
 // ==========================================
@@ -158,7 +185,7 @@ app.get("/api/v1/tasks", async (req, res, next) => {
       data: rows,
     });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
@@ -226,7 +253,7 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
       data: taskData,
     });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
@@ -314,7 +341,7 @@ app.post("/api/v1/tasks", async (req, res, next) => {
       );
     }
 
-    next(err);
+    return next(err);
   }
 });
 
@@ -415,7 +442,7 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
       );
     }
 
-    next(err);
+    return next(err);
   }
 });
 
@@ -532,7 +559,6 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     ]);
 
     const updatedTask = updatedRows[0];
-
     const notification = await notifySafely(updatedTask, "PARTIALLY_UPDATED");
 
     return res.status(200).json({
@@ -553,7 +579,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
       );
     }
 
-    next(err);
+    return next(err);
   }
 });
 
@@ -577,12 +603,39 @@ app.delete("/api/v1/tasks/:id", async (req, res, next) => {
       data: { id },
     });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
+// External API
+app.get("/api/external/todo", async (req, res) => {
+  try {
+    const result = await getExternalTodo();
+
+    return res.status(200).json({
+      message: "ดึงข้อมูลจาก External API สำเร็จ",
+      ...result,
+    });
+  } catch (error) {
+    console.error("[Fallback]", error.message);
+
+    return res.status(200).json({
+      message: "External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน",
+      success: true,
+      source: "fallback",
+      warning: "ข้อมูลนี้เป็นข้อมูลสำรอง ไม่ใช่ข้อมูลสดจาก API",
+      data: {
+        userId: 1,
+        id: 1,
+        title: "ตัวอย่างข้อมูลสำรอง",
+        completed: false,
+      },
+    });
+  }
+});
 // ==========================================
 // 404 HANDLER
+// ต้องอยู่หลังทุก Route รวมถึง External API
 // ==========================================
 
 app.use((req, res) => {
