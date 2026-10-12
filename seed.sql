@@ -2,9 +2,9 @@ USE project_phase1;
 
 -- 1. เพิ่มข้อมูลผู้ใช้ (Users) - 3 ระเบียน
 INSERT INTO users (name, email) VALUES
-  ('สมจิต', 'somjit@example.com'),
-  ('สมชาย', 'somchai@example.com'),
-  ('สมหญิง', 'somying@example.com');
+  ('somjit', 'somjit@example.com'),
+  ('somchai', 'somchai@example.com'),
+  ('somying', 'somying@example.com');
 
 -- 2. เพิ่มข้อมูลหมวดหมู่งาน (Categories) - 3 ระเบียน
 INSERT INTO categories (name, description) VALUES
