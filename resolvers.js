@@ -15,6 +15,18 @@ let users = [
     email: "somying@example.com",
   },
 ];
+let categories = [
+  {
+    id: 1,
+    name: "Project",
+    description: "งานโครงงานและโปรเจกต์",
+  },
+  {
+    id: 2,
+    name: "Homework",
+    description: "การบ้านและงานที่ได้รับมอบหมาย",
+  },
+];
 let tasks = [
   {
     id: 1,
@@ -71,6 +83,16 @@ const resolvers = {
   // ดึงข้อมูล Users ทั้งหมด
   users: () => {
     return users;
+  },
+
+  // ดึงข้อมูล Category ตาม ID
+  category: ({ id }) => {
+    return categories.find((c) => c.id === Number(id)) ?? null;
+  },
+
+  // ดึงข้อมูล Categories ทั้งหมด
+  categories: () => {
+    return categories;
   },
 };
 

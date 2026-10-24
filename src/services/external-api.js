@@ -17,6 +17,10 @@ async function requestWithTimeout(url) {
 
   try {
     const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
       signal: controller.signal,
     });
 
@@ -24,6 +28,8 @@ async function requestWithTimeout(url) {
       const error = new Error(`External API returned HTTP ${response.status}`);
 
       error.status = response.status;
+
+      // ลองใหม่เฉพาะ Server Error (5xx)
       error.retryable = response.status >= 500;
 
       throw error;
@@ -31,8 +37,8 @@ async function requestWithTimeout(url) {
 
     return await response.json();
   } catch (error) {
-    // Network error และ timeout สามารถ retry ได้
     if (error.status == null) {
+      // Network error, timeout หรือ JSON parsing error
       error.retryable = true;
     }
 
@@ -71,11 +77,31 @@ async function getExternalTodo() {
       const waitMs = INITIAL_DELAY_MS * 2 ** attempt;
 
       console.log(`[External API] Retrying in ${waitMs} ms`);
+
       await delay(waitMs);
     }
   }
+
+  throw new Error("External API request failed");
+}
+
+// แจ้งเตือนตัวอย่างผ่าน Console
+// ยังไม่ได้ส่งอีเมลหรือ Push Notification จริง
+async function sendTaskNotification(task, event = "CREATED") {
+  console.log("[Task Notification]", {
+    event,
+    message:
+      event === "CREATED" ? "สร้างงานใหม่สำเร็จ" : "แก้ไขข้อมูลงานสำเร็จ",
+    task,
+  });
+
+  return {
+    success: true,
+    message: "Notification logged successfully",
+  };
 }
 
 module.exports = {
   getExternalTodo,
+  sendTaskNotification,
 };

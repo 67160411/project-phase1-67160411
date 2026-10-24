@@ -13,6 +13,7 @@ const path = require("path");
 const pool = require("./db");
 const schema = require("../schema");
 const resolvers = require("../resolvers");
+
 const {
   sendTaskNotification,
   getExternalTodo,
@@ -60,7 +61,21 @@ function sendError(res, status, code, message) {
   });
 }
 
-// ป้องกันไม่ให้การส่ง Notification ทำให้ API หลักล้มเหลว
+// จัดการกรณีชื่องานซ้ำ
+function handleDuplicateTitle(res, err) {
+  if (err && err.code === "ER_DUP_ENTRY") {
+    return sendError(
+      res,
+      409,
+      "DUPLICATE_TASK_TITLE",
+      "ชื่องานนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น",
+    );
+  }
+
+  return null;
+}
+
+// ป้องกันไม่ให้ Notification ทำให้ API หลักล้มเหลว
 async function notifySafely(task, event) {
   try {
     return await sendTaskNotification(task, event);
@@ -105,7 +120,6 @@ app.get("/", (req, res) => {
 
 // ==========================================
 // EXTERNAL API WITH RETRY / TIMEOUT / FALLBACK
-// IMPORTANT: This route must be before the 404 handler.
 // ==========================================
 
 app.get("/api/external/todo", async (req, res) => {
@@ -143,6 +157,7 @@ app.get("/api/external/todo", async (req, res) => {
 
 // 1. GET: ดึงรายการงานทั้งหมด
 // รองรับ ?category=ชื่อหมวดหมู่ หรือ ?category_id=1
+
 app.get("/api/v1/tasks", async (req, res, next) => {
   try {
     const { category, category_id } = req.query;
@@ -190,6 +205,7 @@ app.get("/api/v1/tasks", async (req, res, next) => {
 });
 
 // 2. GET: ดึงข้อมูลงานตาม ID
+
 app.get("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -258,6 +274,7 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
 });
 
 // 3. POST: เพิ่มงานใหม่
+
 app.post("/api/v1/tasks", async (req, res, next) => {
   const { title, description, due_date, status, user_id, category_id } =
     req.body;
@@ -329,6 +346,12 @@ app.post("/api/v1/tasks", async (req, res, next) => {
       notification,
     });
   } catch (err) {
+    const duplicateResponse = handleDuplicateTitle(res, err);
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
+
     if (
       err.code === "ER_NO_REFERENCED_ROW_2" ||
       err.code === "ER_NO_REFERENCED_ROW"
@@ -346,6 +369,7 @@ app.post("/api/v1/tasks", async (req, res, next) => {
 });
 
 // 4. PUT: แก้ไขงานทั้งระเบียน
+
 app.put("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -407,7 +431,6 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
       ],
     );
 
-    // ตรวจว่ามีระเบียนจริง แม้ค่าที่ส่งมาจะเหมือนข้อมูลเดิม
     const [rows] = await pool.query("SELECT * FROM tasks WHERE id = ?", [id]);
 
     if (rows.length === 0) {
@@ -430,6 +453,12 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
       notification,
     });
   } catch (err) {
+    const duplicateResponse = handleDuplicateTitle(res, err);
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
+
     if (
       err.code === "ER_NO_REFERENCED_ROW_2" ||
       err.code === "ER_NO_REFERENCED_ROW"
@@ -447,6 +476,7 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
 });
 
 // 5. PATCH: แก้ไขงานบางฟิลด์
+
 app.patch("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
   const updates = req.body;
@@ -534,7 +564,6 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
       return sendError(res, 404, "NOT_FOUND", "ไม่พบข้อมูลงาน");
     }
 
-    // ใช้เฉพาะชื่อคอลัมน์จาก allowlist เท่านั้น
     const setClause = fields.map((field) => `\`${field}\` = ?`).join(", ");
 
     const values = fields.map((field) => {
@@ -559,6 +588,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     ]);
 
     const updatedTask = updatedRows[0];
+
     const notification = await notifySafely(updatedTask, "PARTIALLY_UPDATED");
 
     return res.status(200).json({
@@ -567,6 +597,12 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
       notification,
     });
   } catch (err) {
+    const duplicateResponse = handleDuplicateTitle(res, err);
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
+
     if (
       err.code === "ER_NO_REFERENCED_ROW_2" ||
       err.code === "ER_NO_REFERENCED_ROW"
@@ -584,6 +620,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
 });
 
 // 6. DELETE: ลบงานตาม ID
+
 app.delete("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -607,35 +644,8 @@ app.delete("/api/v1/tasks/:id", async (req, res, next) => {
   }
 });
 
-// External API
-app.get("/api/external/todo", async (req, res) => {
-  try {
-    const result = await getExternalTodo();
-
-    return res.status(200).json({
-      message: "ดึงข้อมูลจาก External API สำเร็จ",
-      ...result,
-    });
-  } catch (error) {
-    console.error("[Fallback]", error.message);
-
-    return res.status(200).json({
-      message: "External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน",
-      success: true,
-      source: "fallback",
-      warning: "ข้อมูลนี้เป็นข้อมูลสำรอง ไม่ใช่ข้อมูลสดจาก API",
-      data: {
-        userId: 1,
-        id: 1,
-        title: "ตัวอย่างข้อมูลสำรอง",
-        completed: false,
-      },
-    });
-  }
-});
 // ==========================================
 // 404 HANDLER
-// ต้องอยู่หลังทุก Route รวมถึง External API
 // ==========================================
 
 app.use((req, res) => {
@@ -653,7 +663,6 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
-  // JSON ผิดรูปแบบจาก express.json()
   if (
     err instanceof SyntaxError &&
     err.status === 400 &&

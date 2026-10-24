@@ -1,17 +1,12 @@
 {
   "info": {
-    "_postman_id": "67160411-phase2-tasks-api",
-    "name": "Project Phase 2 - Task Management API (Code-aligned)",
-    "description": "Requests mapped to routes found in src/index.js. Saved response bodies are illustrative examples for documentation and must be replaced/confirmed by sending requests against the running API before claiming live test evidence.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "_postman_id": "ce2c14a4-a41b-47dc-b512-db0c77e1a8e8",
+    "name": "Project Phase 2 - Task Management API",
+    "description": "Postman Collection สำหรับทดสอบ Task Management API และ External API ตัวอย่าง Response ที่บันทึกไว้ใช้ประกอบเอกสารเท่านั้น ต้องส่ง Request ไปยัง API จริงเพื่อยืนยันผล",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56436300",
+    "_collection_link": "https://go.postman.co/collection/56436300-ce2c14a4-a41b-47dc-b512-db0c77e1a8e8?source=collection_link"
   },
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000",
-      "type": "string"
-    }
-  ],
   "item": [
     {
       "name": "1. Health / Root",
@@ -20,23 +15,30 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/",
-          "host": ["{{baseUrl}}"],
-          "path": []
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            ""
+          ]
         },
-        "description": "ตรวจสอบสถานะเซิร์ฟเวอร์และดู endpoint ที่ระบบประกาศไว้"
+        "description": "ตรวจสอบสถานะเซิร์ฟเวอร์และ Endpoint ที่ระบบประกาศไว้"
       },
       "response": [
         {
-          "name": "200 OK - Example response (verify by sending request)",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": []
-            },
-            "description": "ตรวจสอบสถานะเซิร์ฟเวอร์และดู endpoint ที่ระบบประกาศไว้"
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
           },
           "status": "OK",
           "code": 200,
@@ -58,36 +60,35 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks?category_id=1",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks"],
-          "query": [
-            {
-              "key": "category_id",
-              "value": "1"
-            }
+          "raw": "{{baseUrl}}/api/v1/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks"
           ]
         },
-        "description": "ดึงรายการงาน; ลบ query parameter ได้หากต้องการดึงทั้งหมด"
+        "description": "ดึงรายการงานทั้งหมด สามารถเพิ่ม query parameter category หรือ category_id เพื่อกรองข้อมูล"
       },
       "response": [
         {
-          "name": "200 OK - Example response",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks?category_id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"],
-              "query": [
-                {
-                  "key": "category_id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
               ]
-            },
-            "description": "ดึงรายการงาน; ลบ query parameter ได้หากต้องการดึงทั้งหมด"
+            }
           },
           "status": "OK",
           "code": 200,
@@ -102,22 +103,27 @@
           "body": "{\n  \"message\": \"สำเร็จ\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"ทำ project-phase1\",\n      \"description\": \"ทำให้เสร็จภายในกำหนดเวลา\",\n      \"due_date\": \"2026-08-01\",\n      \"status\": \"in_progress\",\n      \"user_id\": 1,\n      \"category_id\": 1,\n      \"created_at\": \"2026-07-01T10:00:00.000Z\",\n      \"category_name\": \"Project\"\n    }\n  ]\n}"
         },
         {
-          "name": "400 Bad Request - Invalid category_id",
+          "name": "400 Bad Request - Invalid category_id (Example)",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks?category_id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"],
+              "raw": "{{baseUrl}}/api/v1/tasks?category_id=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ],
               "query": [
                 {
                   "key": "category_id",
-                  "value": "1"
+                  "value": "abc"
                 }
               ]
-            },
-            "description": "ดึงรายการงาน; ลบ query parameter ได้หากต้องการดึงทั้งหมด"
+            }
           },
           "status": "Bad Request",
           "code": 400,
@@ -143,25 +149,31 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks"]
-        },
-        "description": "เพิ่มงานใหม่; user_id และ category_id ต้องมีอยู่จริงในฐานข้อมูล",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"ทำรายงาน API\",\n  \"description\": \"จัดทำเอกสาร API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
+          "raw": "{\n  \"title\": \"งานทดสอบ Postman 67160411\",\n  \"description\": \"ทดสอบการเพิ่มงานผ่าน API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
-        }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/tasks",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks"
+          ]
+        },
+        "description": "เพิ่มงานใหม่ โดย user_id และ category_id ต้องมีอยู่จริง"
       },
       "response": [
         {
-          "name": "201 Created - Example response",
+          "name": "201 Created - Example",
           "originalRequest": {
             "method": "POST",
             "header": [
@@ -170,20 +182,20 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
-            },
-            "description": "เพิ่มงานใหม่; user_id และ category_id ต้องมีอยู่จริงในฐานข้อมูล",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"ทำรายงาน API\",\n  \"description\": \"จัดทำเอกสาร API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"title\": \"งานทดสอบ Postman 67160411\",\n  \"description\": \"ทดสอบการเพิ่มงานผ่าน API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n            }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           },
           "status": "Created",
@@ -196,10 +208,10 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"เพิ่มข้อมูลสำเร็จ\",\n  \"data\": {\n    \"id\": 10,\n    \"title\": \"ทำรายงาน API\",\n    \"description\": \"จัดทำเอกสาร API\",\n    \"due_date\": \"2026-10-30\",\n    \"status\": \"pending\",\n    \"user_id\": 1,\n    \"category_id\": 1\n  },\n  \"notification\": {\n    \"success\": true,\n    \"message\": \"Notification sent\"\n  }\n}"
+          "body": "{\n  \"message\": \"เพิ่มข้อมูลสำเร็จ\",\n  \"data\": {\n    \"id\": 10,\n    \"title\": \"งานทดสอบ Postman 67160411\",\n    \"description\": \"ทดสอบการเพิ่มงานผ่าน API\",\n    \"due_date\": \"2026-10-30\",\n    \"status\": \"pending\",\n    \"user_id\": 1,\n    \"category_id\": 1\n  }\n}"
         },
         {
-          "name": "400 Bad Request - Missing fields",
+          "name": "400 Bad Request - Missing Fields (Example)",
           "originalRequest": {
             "method": "POST",
             "header": [
@@ -208,20 +220,20 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
-            },
-            "description": "เพิ่มงานใหม่; user_id และ category_id ต้องมีอยู่จริงในฐานข้อมูล",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"ทำรายงาน API\",\n  \"description\": \"จัดทำเอกสาร API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"title\": \"งานที่ข้อมูลไม่ครบ\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           },
           "status": "Bad Request",
@@ -237,7 +249,7 @@
           "body": "{\n  \"error\": {\n    \"code\": \"MISSING_FIELDS\",\n    \"message\": \"กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน\"\n  }\n}"
         },
         {
-          "name": "404 Not Found - Foreign key not found",
+          "name": "404 Not Found - Foreign Key (Example)",
           "originalRequest": {
             "method": "POST",
             "header": [
@@ -246,20 +258,20 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
-            },
-            "description": "เพิ่มงานใหม่; user_id และ category_id ต้องมีอยู่จริงในฐานข้อมูล",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"ทำรายงาน API\",\n  \"description\": \"จัดทำเอกสาร API\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"title\": \"ทดสอบ Foreign Key\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 999999,\n  \"category_id\": 999999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           },
           "status": "Not Found",
@@ -273,6 +285,44 @@
           ],
           "cookie": [],
           "body": "{\n  \"error\": {\n    \"code\": \"FOREIGN_KEY_NOT_FOUND\",\n    \"message\": \"ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ\"\n  }\n}"
+        },
+        {
+          "name": "409 Conflict - Duplicate Title (Example)",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"ชื่อ Task ที่มีอยู่แล้ว\",\n  \"due_date\": \"2026-10-30\",\n  \"status\": \"pending\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
+            }
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"error\": {\n    \"code\": \"DUPLICATE_TASK_TITLE\",\n    \"message\": \"ชื่อ Task นี้มีอยู่ในระบบแล้ว\"\n  }\n}"
         }
       ]
     },
@@ -282,36 +332,37 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks/:id",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks", ":id"],
-          "variable": [
-            {
-              "key": "id",
-              "value": "1"
-            }
+          "raw": "{{baseUrl}}/api/v1/tasks/3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "3"
           ]
         },
         "description": "ดึงรายละเอียดงานตาม ID"
       },
       "response": [
         {
-          "name": "200 OK - Example response",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
               ]
-            },
-            "description": "ดึงรายละเอียดงานตาม ID"
+            }
           },
           "status": "OK",
           "code": 200,
@@ -326,22 +377,22 @@
           "body": "{\n  \"message\": \"สำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"ทำ project-phase1\",\n    \"description\": \"ทำให้เสร็จภายในกำหนดเวลา\",\n    \"due_date\": \"2026-08-01\",\n    \"status\": \"in_progress\",\n    \"user_id\": 1,\n    \"category_id\": 1,\n    \"created_at\": \"2026-07-01T10:00:00.000Z\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"สมจิต\",\n      \"email\": \"somjit@example.com\"\n    },\n    \"category\": {\n      \"id\": 1,\n      \"name\": \"Project\",\n      \"description\": \"งานโครงการ\"\n    }\n  }\n}"
         },
         {
-          "name": "400 Bad Request - Invalid ID",
+          "name": "400 Bad Request - Invalid ID (Example)",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "abc"
               ]
-            },
-            "description": "ดึงรายละเอียดงานตาม ID"
+            }
           },
           "status": "Bad Request",
           "code": 400,
@@ -356,22 +407,22 @@
           "body": "{\n  \"error\": {\n    \"code\": \"INVALID_ID\",\n    \"message\": \"id ต้องเป็นจำนวนเต็มบวก\"\n  }\n}"
         },
         {
-          "name": "404 Not Found - Example response",
+          "name": "404 Not Found - Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "999999"
               ]
-            },
-            "description": "ดึงรายละเอียดงานตาม ID"
+            }
           },
           "status": "Not Found",
           "code": 404,
@@ -397,31 +448,32 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks/:id",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks", ":id"],
-          "variable": [
-            {
-              "key": "id",
-              "value": "1"
-            }
-          ]
-        },
-        "description": "แทนที่ฟิลด์หลักของงาน โดยต้องส่งฟิลด์บังคับครบ",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"แก้ไขงาน\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
+          "raw": "{\n  \"title\": \"แก้ไขงานทดสอบ Postman\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
-        }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/tasks/3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "3"
+          ]
+        },
+        "description": "แทนที่ข้อมูลหลักของงาน ส่งฟิลด์บังคับให้ครบ"
       },
       "response": [
         {
-          "name": "200 OK - Example response",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "PUT",
             "header": [
@@ -430,26 +482,21 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แทนที่ฟิลด์หลักของงาน โดยต้องส่งฟิลด์บังคับครบ",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"แก้ไขงาน\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"title\": \"แก้ไขงานทดสอบ Postman\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
             }
           },
           "status": "OK",
@@ -462,10 +509,10 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"แก้ไขข้อมูลสำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"แก้ไขงาน\",\n    \"description\": \"รายละเอียดใหม่\",\n    \"due_date\": \"2026-11-01\",\n    \"status\": \"in_progress\",\n    \"user_id\": 1,\n    \"category_id\": 1\n  },\n  \"notification\": {\n    \"success\": true,\n    \"message\": \"Notification sent\"\n  }\n}"
+          "body": "{\n  \"message\": \"แก้ไขข้อมูลสำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"แก้ไขงานทดสอบ Postman\",\n    \"description\": \"รายละเอียดใหม่\",\n    \"due_date\": \"2026-11-01\",\n    \"status\": \"in_progress\",\n    \"user_id\": 1,\n    \"category_id\": 1\n  }\n}"
         },
         {
-          "name": "400 Bad Request - Missing fields",
+          "name": "409 Conflict - Duplicate Title (Example)",
           "originalRequest": {
             "method": "PUT",
             "header": [
@@ -474,30 +521,25 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แทนที่ฟิลด์หลักของงาน โดยต้องส่งฟิลด์บังคับครบ",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"แก้ไขงาน\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"title\": \"ชื่อ Task ของรายการอื่น\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
             }
           },
-          "status": "Bad Request",
-          "code": 400,
+          "status": "Conflict",
+          "code": 409,
           "_postman_previewlanguage": "json",
           "header": [
             {
@@ -506,51 +548,7 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"error\": {\n    \"code\": \"MISSING_FIELDS\",\n    \"message\": \"กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน\"\n  }\n}"
-        },
-        {
-          "name": "404 Not Found - Task not found",
-          "originalRequest": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แทนที่ฟิลด์หลักของงาน โดยต้องส่งฟิลด์บังคับครบ",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"แก้ไขงาน\",\n  \"description\": \"รายละเอียดใหม่\",\n  \"due_date\": \"2026-11-01\",\n  \"status\": \"in_progress\",\n  \"user_id\": 1,\n  \"category_id\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "status": "Not Found",
-          "code": 404,
-          "_postman_previewlanguage": "json",
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json; charset=utf-8"
-            }
-          ],
-          "cookie": [],
-          "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"ไม่พบข้อมูลงาน\"\n  }\n}"
+          "body": "{\n  \"error\": {\n    \"code\": \"DUPLICATE_TASK_TITLE\",\n    \"message\": \"ชื่อ Task นี้มีอยู่ในระบบแล้ว\"\n  }\n}"
         }
       ]
     },
@@ -564,18 +562,6 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks/:id",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks", ":id"],
-          "variable": [
-            {
-              "key": "id",
-              "value": "1"
-            }
-          ]
-        },
-        "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"status\": \"done\"\n}",
@@ -584,11 +570,24 @@
               "language": "json"
             }
           }
-        }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/tasks/2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "2"
+          ]
+        },
+        "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา"
       },
       "response": [
         {
-          "name": "200 OK - Example response",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "PATCH",
             "header": [
@@ -597,26 +596,21 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"done\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"status\": \"done\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
             }
           },
           "status": "OK",
@@ -629,10 +623,10 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"แก้ไขข้อมูลงานสำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"ทำ project-phase1\",\n    \"status\": \"done\"\n  },\n  \"notification\": {\n    \"success\": true,\n    \"message\": \"Notification sent\"\n  }\n}"
+          "body": "{\n  \"message\": \"แก้ไขข้อมูลงานสำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"ทำ project-phase1\",\n    \"status\": \"done\"\n  }\n}"
         },
         {
-          "name": "400 Bad Request - Empty body",
+          "name": "400 Bad Request - Empty Body (Example)",
           "originalRequest": {
             "method": "PATCH",
             "header": [
@@ -641,26 +635,21 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"done\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
             }
           },
           "status": "Bad Request",
@@ -676,7 +665,7 @@
           "body": "{\n  \"error\": {\n    \"code\": \"NO_UPDATES\",\n    \"message\": \"กรุณาระบุข้อมูลที่ต้องการแก้ไข\"\n  }\n}"
         },
         {
-          "name": "400 Bad Request - Invalid field",
+          "name": "400 Bad Request - Invalid Field (Example)",
           "originalRequest": {
             "method": "PATCH",
             "header": [
@@ -685,26 +674,21 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"done\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"invalid_field\": \"value\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
+              ]
             }
           },
           "status": "Bad Request",
@@ -720,7 +704,7 @@
           "body": "{\n  \"error\": {\n    \"code\": \"INVALID_FIELDS\",\n    \"message\": \"ไม่อนุญาตให้แก้ไขฟิลด์: invalid_field\"\n  }\n}"
         },
         {
-          "name": "404 Not Found - Task not found",
+          "name": "404 Not Found - Example",
           "originalRequest": {
             "method": "PATCH",
             "header": [
@@ -729,26 +713,21 @@
                 "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"done\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"status\": \"done\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "999999"
+              ]
             }
           },
           "status": "Not Found",
@@ -771,36 +750,37 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/v1/tasks/:id",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "tasks", ":id"],
-          "variable": [
-            {
-              "key": "id",
-              "value": "1"
-            }
+          "raw": "{{baseUrl}}/api/v1/tasks/3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "3"
           ]
         },
-        "description": "ลบงานตาม ID"
+        "description": "ลบงานตาม ID ควรใช้ ID ของงานทดสอบเพื่อไม่ลบข้อมูลงานจริง"
       },
       "response": [
         {
-          "name": "200 OK - Example response",
+          "name": "200 OK - Example",
           "originalRequest": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "1"
               ]
-            },
-            "description": "ลบงานตาม ID"
+            }
           },
           "status": "OK",
           "code": 200,
@@ -812,25 +792,25 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"ลบข้อมูลสำเร็จ\",\n  \"data\": {\n    \"id\": 1\n  }\n}"
+          "body": "{\n  \"message\": \"ลบข้อมูลสำเร็จ\"\n}"
         },
         {
-          "name": "400 Bad Request - Invalid ID",
+          "name": "400 Bad Request - Invalid ID (Example)",
           "originalRequest": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "abc"
               ]
-            },
-            "description": "ลบงานตาม ID"
+            }
           },
           "status": "Bad Request",
           "code": 400,
@@ -845,22 +825,23 @@
           "body": "{\n  \"error\": {\n    \"code\": \"INVALID_ID\",\n    \"message\": \"id ต้องเป็นจำนวนเต็มบวก\"\n  }\n}"
         },
         {
-          "name": "404 Not Found - Task not found",
+          "name": "404 Not Found - Example",
           "originalRequest": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
+              "raw": "{{baseUrl}}/api/v1/tasks/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "999999"
               ]
             },
-            "description": "ลบงานตาม ID"
+            "description": "ใช้ ID ที่ไม่มีอยู่จริง"
           },
           "status": "Not Found",
           "code": 404,
@@ -872,34 +853,45 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"ไม่พบข้อมูลงาน\"\n  }\n}"
+          "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"ไม่พบข้อมูลงาน\"\n  }"
         }
       ]
     },
     {
-      "name": "8. External Todo (Retry / Timeout / Fallback)",
+      "name": "8. External Todo",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/external/todo",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "external", "todo"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "external",
+            "todo"
+          ]
         },
-        "description": "เรียก External API; ถ้าล้มเหลวจะคืนข้อมูล fallback ด้วย HTTP 200"
+        "description": "เรียก External API โดย Service มี retry/timeout และอาจคืน fallback เมื่อเรียกไม่สำเร็จ"
       },
       "response": [
         {
-          "name": "200 OK - External API example",
+          "name": "200 OK - External API Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/external/todo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "external", "todo"]
-            },
-            "description": "เรียก External API; ถ้าล้มเหลวจะคืนข้อมูล fallback ด้วย HTTP 200"
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "todo"
+              ]
+            }
           },
           "status": "OK",
           "code": 200,
@@ -911,19 +903,24 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"ดึงข้อมูลจาก External API สำเร็จ\",\n  \"userId\": 1,\n  \"id\": 1,\n  \"title\": \"delectus aut autem\",\n  \"completed\": false\n}"
+          "body": "{\n  \"message\": \"ดึงข้อมูลจาก External API สำเร็จ\",\n  \"success\": true,\n  \"source\": \"external_api\",\n  \"data\": {\n    \"userId\": 1,\n    \"id\": 1,\n    \"title\": \"delectus aut autem\",\n    \"completed\": false\n  }\n}"
         },
         {
-          "name": "200 OK - Fallback example",
+          "name": "200 OK - Fallback Example",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/external/todo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "external", "todo"]
-            },
-            "description": "เรียก External API; ถ้าล้มเหลวจะคืนข้อมูล fallback ด้วย HTTP 200"
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "todo"
+              ]
+            }
           },
           "status": "OK",
           "code": 200,
@@ -938,6 +935,12 @@
           "body": "{\n  \"message\": \"External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน\",\n  \"success\": true,\n  \"source\": \"fallback\",\n  \"warning\": \"ข้อมูลนี้เป็นข้อมูลสำรอง ไม่ใช่ข้อมูลสดจาก API\",\n  \"data\": {\n    \"userId\": 1,\n    \"id\": 1,\n    \"title\": \"ตัวอย่างข้อมูลสำรอง\",\n    \"completed\": false\n  }\n}"
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
     }
   ]
 }

@@ -1,9 +1,9 @@
 -- สร้างฐานข้อมูล (ถ้ายังไม่มี)
-CREATE DATABASE IF NOT EXISTS task_management_db 
+CREATE DATABASE IF NOT EXISTS project_phase1 
   CHARACTER SET utf8mb4 
   COLLATE utf8mb4_unicode_ci;
 
-USE task_management_db;
+USE project_phase1;
 
 -- 1. ตารางผู้ใช้งาน (users)
 CREATE TABLE IF NOT EXISTS users (
