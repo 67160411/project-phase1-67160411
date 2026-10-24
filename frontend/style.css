@@ -122,8 +122,8 @@ h2 {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
   margin-bottom: 22px;
 }
 
@@ -481,5 +481,32 @@ footer {
 
   .list-heading {
     align-items: flex-start;
+  }
+}
+
+/* ทำให้การ์ดงานเปลี่ยนแปลงอย่างนุ่มนวล */
+.task-card {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* เอฟเฟกต์ตอนกดปุ่ม */
+.task-card button {
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.task-card button:active {
+  transform: scale(0.97);
+}
+
+/* ลดการเคลื่อนไหวสำหรับผู้ที่ตั้งค่าลด Animation */
+@media (prefers-reduced-motion: reduce) {
+  .task-card,
+  .task-card button {
+    transition: none;
   }
 }
