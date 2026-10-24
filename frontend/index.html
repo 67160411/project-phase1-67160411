@@ -102,17 +102,13 @@
               />
             </label>
 
-            <label class="field">
-              Category ID <span class="required">*</span>
-              <input
-                type="number"
-                id="category_id"
-                name="category_id"
-                min="1"
-                step="1"
-                value="1"
-                required
-              />
+            <label class="field"
+              >หมวดหมู่ <span class="required">*</span>
+              <select id="category_id" name="category_id" required>
+                <option value="1">Project</option>
+                <option value="2">Homework</option>
+                <option value="3">General</option>
+              </select>
             </label>
           </div>
 

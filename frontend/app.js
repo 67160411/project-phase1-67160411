@@ -11,6 +11,7 @@ const searchInput = document.querySelector("#searchInput");
 const statusFilter = document.querySelector("#statusFilter");
 
 let tasks = [];
+let editingTaskId = null;
 
 const STATUS_LABELS = {
   pending: "รอดำเนินการ",
@@ -173,14 +174,23 @@ function renderTasks() {
         </div>
 
         <div class="task-actions">
-          <button
-            type="button"
-            class="button button-secondary"
-            data-action="toggle"
-            data-id="${id}"
-          >
-            ${actionLabel}
-          </button>
+            <button
+                type="button"
+                class="button button-secondary"
+                data-action="edit"
+                data-id="${id}"
+            >
+                แก้ไข
+            </button>
+
+            <button
+                type="button"
+                class="button button-secondary"
+                data-action="toggle"
+                data-id="${id}"
+            >
+                ${actionLabel}
+            </button>
 
           <button
             type="button"
@@ -277,15 +287,26 @@ taskForm.addEventListener("submit", async (event) => {
   submitLabel.textContent = "กำลังบันทึก...";
 
   try {
-    const result = await requestApi(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const isEditing = editingTaskId !== null;
 
-    showMessage(formMessage, result.message || "เพิ่มงานสำเร็จ", "success");
+    const result = await requestApi(
+      isEditing ? `${API_URL}/${editingTaskId}` : API_URL,
+      {
+        method: isEditing ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      },
+    );
 
+    showMessage(
+      formMessage,
+      result.message || (isEditing ? "แก้ไขงานสำเร็จ" : "เพิ่มงานสำเร็จ"),
+      "success",
+    );
+
+    editingTaskId = null;
     taskForm.reset();
     setDefaultDueDate();
+
     await loadTasks();
   } catch (error) {
     showMessage(formMessage, error.message, "error");
@@ -294,6 +315,30 @@ taskForm.addEventListener("submit", async (event) => {
     submitLabel.textContent = "+ เพิ่มงาน";
   }
 });
+
+function startEditTask(task) {
+  editingTaskId = Number(task.id);
+
+  document.querySelector("#title").value = task.title ?? "";
+  document.querySelector("#description").value = task.description ?? "";
+
+  document.querySelector("#due_date").value = task.due_date
+    ? String(task.due_date).slice(0, 10)
+    : "";
+
+  document.querySelector("#status").value = task.status ?? "pending";
+  document.querySelector("#user_id").value = task.user_id ?? "";
+
+  document.querySelector("#category_id").value = String(task.category_id ?? "");
+
+  submitLabel.textContent = "บันทึกการแก้ไข";
+  document.querySelector("#taskForm").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+
+  showMessage(formMessage, `กำลังแก้ไขงาน ID ${task.id}`, "info");
+}
 
 taskList.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
@@ -313,6 +358,11 @@ taskList.addEventListener("click", async (event) => {
   hideMessage(listMessage);
 
   try {
+    if (action === "edit") {
+      startEditTask(task);
+      return;
+    }
+
     if (action === "toggle") {
       const nextStatus = task.status === "done" ? "pending" : "done";
 
@@ -353,6 +403,9 @@ searchInput.addEventListener("input", renderTasks);
 statusFilter.addEventListener("change", renderTasks);
 
 taskForm.addEventListener("reset", () => {
+  editingTaskId = null;
+  submitLabel.textContent = "+ เพิ่มงาน";
+  hideMessage(formMessage);
   window.setTimeout(setDefaultDueDate, 0);
 });
 

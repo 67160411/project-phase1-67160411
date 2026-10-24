@@ -31,6 +31,14 @@ const openapiFile = fs.readFileSync(openapiPath, "utf8");
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(YAML.parse(openapiFile)));
 
+// เปิดไฟล์ Frontend ผ่าน /app
+app.use("/app", express.static(path.join(__dirname, "../frontend")));
+
+// เปิดหน้าแรกของ Frontend
+app.get("/app", (req, res) => {
+  res.redirect("/app/");
+});
+
 // ==========================================
 // MIDDLEWARES
 // ==========================================
