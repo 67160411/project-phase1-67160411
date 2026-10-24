@@ -700,4 +700,5 @@ app.listen(PORT, () => {
   console.log(`Server กำลังทำงานที่ http://localhost:${PORT}`);
   console.log(`Swagger UI: http://localhost:${PORT}/api-docs`);
   console.log(`GraphQL: http://localhost:${PORT}/graphql`);
+  console.log(`TaskFlow: http://localhost:${PORT}/app/`);
 });
