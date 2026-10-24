@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#5b4bdb" />
+    <title>TaskFlow | จัดการงาน</title>
+    <link rel="stylesheet" href="/app/style.css" />
+    <script src="/app/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/app/">
+        <span class="brand-icon">✓</span>
+        <span>TaskFlow</span>
+      </a>
+      <span class="api-status" id="apiStatus">กำลังเชื่อมต่อ API...</span>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <p class="eyebrow">TASK MANAGEMENT SYSTEM</p>
+        <h1>จัดการงานของคุณ</h1>
+        <p class="subtitle">
+          รวมรายการงาน ติดตามสถานะ และจัดการงานได้ในหน้าเดียว
+        </p>
+      </section>
+
+      <section class="stats">
+        <article class="stat-card">
+          <span>งานทั้งหมด</span>
+          <strong id="totalCount">—</strong>
+        </article>
+        <article class="stat-card">
+          <span>รอดำเนินการ</span>
+          <strong id="pendingCount">—</strong>
+        </article>
+        <article class="stat-card">
+          <span>เสร็จแล้ว</span>
+          <strong id="doneCount">—</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">NEW TASK</p>
+            <h2>เพิ่มงานใหม่</h2>
+          </div>
+        </div>
+
+        <div id="formMessage" class="notice hidden" role="alert"></div>
+
+        <form id="taskForm">
+          <div class="form-grid">
+            <label class="field field-full">
+              ชื่องาน <span class="required">*</span>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                maxlength="255"
+                placeholder="เช่น ทำรายงาน API"
+                required
+              />
+            </label>
+
+            <label class="field field-full">
+              รายละเอียด
+              <textarea
+                id="description"
+                name="description"
+                rows="3"
+                placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
+              ></textarea>
+            </label>
+
+            <label class="field">
+              วันครบกำหนด <span class="required">*</span>
+              <input type="date" id="due_date" name="due_date" required />
+            </label>
+
+            <label class="field">
+              สถานะ <span class="required">*</span>
+              <select id="status" name="status" required>
+                <option value="pending">รอดำเนินการ</option>
+                <option value="in_progress">กำลังดำเนินการ</option>
+                <option value="done">เสร็จแล้ว</option>
+              </select>
+            </label>
+
+            <label class="field">
+              User ID <span class="required">*</span>
+              <input
+                type="number"
+                id="user_id"
+                name="user_id"
+                min="1"
+                step="1"
+                value="1"
+                required
+              />
+            </label>
+
+            <label class="field">
+              Category ID <span class="required">*</span>
+              <input
+                type="number"
+                id="category_id"
+                name="category_id"
+                min="1"
+                step="1"
+                value="1"
+                required
+              />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="reset" class="button button-secondary">
+              ล้างฟอร์ม
+            </button>
+            <button
+              type="submit"
+              id="submitButton"
+              class="button button-primary"
+            >
+              <span id="submitLabel">+ เพิ่มงาน</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="list-heading">
+          <div>
+            <p class="eyebrow">YOUR WORKSPACE</p>
+            <h2>รายการงาน</h2>
+          </div>
+
+          <button
+            id="refreshButton"
+            class="button button-secondary"
+            type="button"
+          >
+            ↻ รีเฟรช
+          </button>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              id="searchInput"
+              placeholder="ค้นหาชื่องาน..."
+              aria-label="ค้นหาชื่องาน"
+            />
+          </label>
+
+          <label class="filter-box">
+            <span class="sr-only">กรองตามสถานะ</span>
+            <select id="statusFilter">
+              <option value="all">ทุกสถานะ</option>
+              <option value="pending">รอดำเนินการ</option>
+              <option value="in_progress">กำลังดำเนินการ</option>
+              <option value="done">เสร็จแล้ว</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="listMessage" class="notice hidden" role="status"></div>
+
+        <div id="taskList" class="task-list" aria-live="polite">
+          <div class="loading">กำลังโหลดรายการงาน...</div>
+        </div>
+      </section>
+
+      <footer>
+        <p>TaskFlow · Client-Facing Frontend · Week 15</p>
+      </footer>
+    </main>
+  </body>
+</html>
