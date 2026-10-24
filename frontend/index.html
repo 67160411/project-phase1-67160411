@@ -4,17 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#5b4bdb" />
+    <meta
+      name="description"
+      content="TaskFlow ระบบจัดการงาน ติดตามสถานะ และวันครบกำหนด"
+    />
     <title>TaskFlow | จัดการงาน</title>
     <link rel="stylesheet" href="/app/style.css" />
     <script src="/app/app.js" defer></script>
   </head>
+
   <body>
     <header class="topbar">
-      <a class="brand" href="/app/">
-        <span class="brand-icon">✓</span>
+      <a class="brand" href="/app/" aria-label="TaskFlow หน้าหลัก">
+        <span class="brand-icon" aria-hidden="true">✓</span>
         <span>TaskFlow</span>
       </a>
-      <span class="api-status" id="apiStatus">กำลังเชื่อมต่อ API...</span>
+
+      <span class="api-status" id="apiStatus" role="status" aria-live="polite">
+        กำลังเชื่อมต่อ API...
+      </span>
     </header>
 
     <main class="container">
@@ -26,25 +34,30 @@
         </p>
       </section>
 
-      <section class="stats">
+      <!-- สรุปจำนวนงาน -->
+      <section class="stats" aria-label="สรุปสถานะงาน">
         <article class="stat-card">
           <span>งานทั้งหมด</span>
           <strong id="totalCount">—</strong>
         </article>
+
         <article class="stat-card">
           <span>รอดำเนินการ</span>
           <strong id="pendingCount">—</strong>
         </article>
+
         <article class="stat-card">
           <span>กำลังดำเนินการ</span>
           <strong id="inProgressCount">—</strong>
         </article>
+
         <article class="stat-card">
           <span>เสร็จแล้ว</span>
           <strong id="doneCount">—</strong>
         </article>
       </section>
 
+      <!-- ฟอร์มเพิ่มงาน -->
       <section class="panel">
         <div class="section-heading">
           <div>
@@ -53,11 +66,16 @@
           </div>
         </div>
 
-        <div id="formMessage" class="notice hidden" role="alert"></div>
+        <div
+          id="formMessage"
+          class="notice hidden"
+          role="alert"
+          aria-live="assertive"
+        ></div>
 
         <form id="taskForm">
           <div class="form-grid">
-            <label class="field field-full">
+            <label class="field field-full" for="title">
               ชื่องาน <span class="required">*</span>
               <input
                 type="text"
@@ -65,11 +83,12 @@
                 name="title"
                 maxlength="255"
                 placeholder="เช่น ทำรายงาน API"
+                autocomplete="off"
                 required
               />
             </label>
 
-            <label class="field field-full">
+            <label class="field field-full" for="description">
               รายละเอียด
               <textarea
                 id="description"
@@ -79,12 +98,12 @@
               ></textarea>
             </label>
 
-            <label class="field">
+            <label class="field" for="due_date">
               วันครบกำหนด <span class="required">*</span>
               <input type="date" id="due_date" name="due_date" required />
             </label>
 
-            <label class="field">
+            <label class="field" for="status">
               สถานะ <span class="required">*</span>
               <select id="status" name="status" required>
                 <option value="pending">รอดำเนินการ</option>
@@ -93,21 +112,11 @@
               </select>
             </label>
 
-            <label class="field">
-              User ID <span class="required">*</span>
-              <input
-                type="number"
-                id="user_id"
-                name="user_id"
-                min="1"
-                step="1"
-                value="1"
-                required
-              />
-            </label>
+            <!-- ไม่แสดง User ID ให้ผู้ใช้กรอก -->
+            <!-- app.js ต้องกำหนด user_id: 1 ใน Request เอง -->
 
-            <label class="field"
-              >หมวดหมู่ <span class="required">*</span>
+            <label class="field" for="category_id">
+              หมวดหมู่ <span class="required">*</span>
               <select id="category_id" name="category_id" required>
                 <option value="1">Project</option>
                 <option value="2">Homework</option>
@@ -120,6 +129,7 @@
             <button type="reset" class="button button-secondary">
               ล้างฟอร์ม
             </button>
+
             <button
               type="submit"
               id="submitButton"
@@ -131,6 +141,7 @@
         </form>
       </section>
 
+      <!-- รายการงาน -->
       <section class="panel">
         <div class="list-heading">
           <div>
@@ -169,9 +180,19 @@
           </label>
         </div>
 
-        <div id="listMessage" class="notice hidden" role="status"></div>
+        <div
+          id="listMessage"
+          class="notice hidden"
+          role="status"
+          aria-live="polite"
+        ></div>
 
-        <div id="taskList" class="task-list" aria-live="polite">
+        <div
+          id="taskList"
+          class="task-list"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div class="loading">กำลังโหลดรายการงาน...</div>
         </div>
       </section>

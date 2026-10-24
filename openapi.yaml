@@ -1,12 +1,13 @@
 openapi: 3.0.3
 
 info:
-  title: Task Management API
-  version: 1.0.0
+  title: TaskFlow API
+  version: 3.0.0
   description: |
-    API สำหรับจัดการงานในโครงงาน
-    ครอบคลุมการอ่าน เพิ่ม แก้ไข และลบข้อมูล Tasks
-    รวมถึงการเรียกใช้ External API โดยมีระบบ retry, timeout และ fallback
+    TaskFlow API สำหรับจัดการงานของผู้ใช้
+    รองรับการอ่าน เพิ่ม แก้ไข และลบงาน
+    รองรับการกรองตามหมวดหมู่ GraphQL และ Swagger
+    รวมถึง External API ที่มี Retry, Timeout และ Fallback
 
 servers:
   - url: http://localhost:3000
@@ -18,25 +19,23 @@ tags:
   - name: Tasks
     description: API สำหรับจัดการงาน
   - name: External API
-    description: การเรียกใช้ API ภายนอกพร้อมกลไก fallback
+    description: API ภายนอกและระบบ Fallback
+  - name: GraphQL
+    description: GraphQL endpoint
 
 paths:
   /:
     get:
-      tags:
-        - General
-      summary: ตรวจสอบสถานะ API
-      description: ตรวจสอบว่าเซิร์ฟเวอร์ทำงานอยู่หรือไม่
+      tags: [General]
+      summary: ตรวจสอบสถานะระบบ
       operationId: getRoot
       responses:
         "200":
-          description: API พร้อมใช้งาน
+          description: เซิร์ฟเวอร์พร้อมใช้งาน
           content:
             application/json:
               schema:
                 type: object
-                required:
-                  - message
                 properties:
                   message:
                     type: string
@@ -56,35 +55,25 @@ paths:
                       swagger:
                         type: string
                         example: /api-docs
-              example:
-                message: project-phase1-67160411 พร้อมใช้งาน
-                endpoints:
-                  tasks: /api/v1/tasks
-                  externalTodo: /api/external/todo
-                  graphql: /graphql
-                  swagger: /api-docs
-        "500":
-          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/tasks:
     get:
-      tags:
-        - Tasks
+      tags: [Tasks]
       summary: ดึงรายการงานทั้งหมด
-      description: สามารถกรองรายการงานตามชื่อหมวดหมู่หรือรหัสหมวดหมู่ได้
+      description: กรองงานด้วยชื่อหมวดหมู่หรือ category_id ได้
       operationId: getTasks
       parameters:
         - name: category
           in: query
           required: false
-          description: ชื่อหมวดหมู่ที่ต้องการกรอง
+          description: ชื่อหมวดหมู่ (ไม่แยกตัวพิมพ์เล็กและใหญ่)
           schema:
             type: string
           example: Project
         - name: category_id
           in: query
           required: false
-          description: รหัสหมวดหมู่ที่ต้องการกรอง
+          description: รหัสหมวดหมู่ ต้องเป็นจำนวนเต็มบวก
           schema:
             type: integer
             minimum: 1
@@ -96,9 +85,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - message
-                  - data
+                required: [message, data]
                 properties:
                   message:
                     type: string
@@ -107,37 +94,22 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/TaskListItem"
-              example:
-                message: สำเร็จ
-                data:
-                  - id: 1
-                    title: ทำ project-phase1
-                    description: ทำให้เสร็จภายในกำหนดเวลา
-                    category: Project
-                    category_name: Project
-                    due_date: "2026-08-01T00:00:00.000Z"
-                    status: in_progress
-                    user_id: 1
-                    category_id: 1
-                    created_at: "2026-07-01T10:00:00.000Z"
         "400":
-          description: พารามิเตอร์ไม่ถูกต้อง
+          description: category_id ไม่ถูกต้อง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
                 error:
-                  code: INVALID_PARAMETER
-                  message: category_id ต้องเป็นตัวเลขจำนวนเต็ม
+                  code: INVALID_CATEGORY_ID
+                  message: category_id ต้องเป็นจำนวนเต็มบวก
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      tags:
-        - Tasks
+      tags: [Tasks]
       summary: เพิ่มงานใหม่
-      description: สร้างงานใหม่โดยต้องระบุข้อมูลที่จำเป็นให้ครบ
       operationId: createTask
       requestBody:
         required: true
@@ -146,50 +118,51 @@ paths:
             schema:
               $ref: "#/components/schemas/TaskInput"
             example:
-              title: ทำรายงาน API
-              description: จัดทำเอกสาร API
+              title: ทบทวนบทเรียนก่อนสอบ
+              description: อ่านและสรุปเนื้อหา
               due_date: "2026-10-30"
               status: pending
-              user_id: 1
+              user_id: 2
               category_id: 1
       responses:
         "201":
-          description: เพิ่มข้อมูลสำเร็จ
+          description: เพิ่มงานสำเร็จ
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - message
-                  - data
-                properties:
-                  message:
-                    type: string
-                    example: เพิ่มข้อมูลสำเร็จ
-                  data:
-                    $ref: "#/components/schemas/TaskWriteResponse"
+                $ref: "#/components/schemas/TaskMutationResponse"
               example:
                 message: เพิ่มข้อมูลสำเร็จ
                 data:
                   id: 10
-                  title: ทำรายงาน API
-                  description: จัดทำเอกสาร API
-                  category: Project
+                  title: ทบทวนบทเรียนก่อนสอบ
+                  description: อ่านและสรุปเนื้อหา
                   due_date: "2026-10-30T00:00:00.000Z"
                   status: pending
-                  user_id: 1
+                  user_id: 2
                   category_id: 1
-                  created_at: "2026-10-24T10:00:00.000Z"
+                notification:
+                  success: true
+                  message: Notification logged successfully
         "400":
-          description: ข้อมูลที่จำเป็นไม่ครบถ้วน หรือรูปแบบข้อมูลไม่ถูกต้อง
+          description: ข้อมูลไม่ครบหรือ ID ไม่ถูกต้อง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: MISSING_FIELDS
-                  message: กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน
+              examples:
+                missingFields:
+                  summary: ข้อมูลที่จำเป็นไม่ครบ
+                  value:
+                    error:
+                      code: MISSING_FIELDS
+                      message: กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน
+                invalidForeignKey:
+                  summary: ID อ้างอิงไม่ถูกต้อง
+                  value:
+                    error:
+                      code: INVALID_FOREIGN_KEY
+                      message: user_id และ category_id ต้องเป็นจำนวนเต็มบวก
         "404":
           description: ไม่พบผู้ใช้หรือหมวดหมู่ที่อ้างอิง
           content:
@@ -210,17 +183,15 @@ paths:
       - name: id
         in: path
         required: true
-        description: รหัสงาน ต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป
+        description: รหัสงาน ต้องเป็นจำนวนเต็มบวก
         schema:
           type: integer
           minimum: 1
         example: 1
 
     get:
-      tags:
-        - Tasks
-      summary: ดึงข้อมูลงานตาม ID
-      description: ดึงรายละเอียดงานพร้อมข้อมูลผู้ใช้และหมวดหมู่
+      tags: [Tasks]
+      summary: ดึงรายละเอียดงานตาม ID
       operationId: getTaskById
       responses:
         "200":
@@ -229,9 +200,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - message
-                  - data
+                required: [message, data]
                 properties:
                   message:
                     type: string
@@ -239,94 +208,54 @@ paths:
                   data:
                     $ref: "#/components/schemas/TaskDetail"
         "400":
-          description: รูปแบบ ID ไม่ถูกต้อง
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: INVALID_ID
-                  message: ID ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่าหรือเท่ากับ 1
+          $ref: "#/components/responses/InvalidId"
         "404":
-          description: ไม่พบงานที่ระบุ
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: NOT_FOUND
-                  message: ไม่พบข้อมูลงาน
+          $ref: "#/components/responses/TaskNotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      tags:
-        - Tasks
-      summary: แก้ไขข้อมูลงานทั้งหมด
-      description: แทนที่ข้อมูลหลักของงานตาม ID โดยต้องส่งข้อมูลที่จำเป็นให้ครบ
-      operationId: replaceTask
+      tags: [Tasks]
+      summary: แก้ไขงานทั้งรายการ
+      description: ต้องส่ง title, due_date, status, user_id และ category_id ให้ครบ
+      operationId: updateTask
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/TaskInput"
-            example:
-              title: ทำรายงาน API ฉบับแก้ไข
-              description: ปรับปรุงเอกสาร API
-              due_date: "2026-10-31"
-              status: in_progress
-              user_id: 1
-              category_id: 1
       responses:
         "200":
-          description: แก้ไขข้อมูลสำเร็จ
+          description: แก้ไขงานสำเร็จ
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - message
-                  - data
-                properties:
-                  message:
-                    type: string
-                    example: แก้ไขข้อมูลสำเร็จ
-                  data:
-                    $ref: "#/components/schemas/TaskWriteResponse"
+                $ref: "#/components/schemas/TaskMutationResponse"
         "400":
-          description: ID หรือข้อมูลที่ส่งมาไม่ถูกต้อง หรือข้อมูลที่จำเป็นไม่ครบ
+          description: ID หรือข้อมูลที่ส่งมาไม่ถูกต้อง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: MISSING_FIELDS
-                  message: กรุณาระบุ title, due_date, status, user_id และ category_id ให้ครบถ้วน
         "404":
-          description: ไม่พบงาน ผู้ใช้ หรือหมวดหมู่ที่อ้างอิง
+          description: ไม่พบงานหรือข้อมูลอ้างอิง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: NOT_FOUND
-                  message: ไม่พบข้อมูลงาน
         "409":
           $ref: "#/components/responses/DuplicateTaskTitle"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     patch:
-      tags:
-        - Tasks
-      summary: แก้ไขข้อมูลงานบางส่วน
-      description: แก้ไขเฉพาะฟิลด์ที่ส่งมาใน Request Body
-      operationId: updateTaskPartially
+      tags: [Tasks]
+      summary: แก้ไขงานบางฟิลด์
+      description: |
+        ส่งเฉพาะฟิลด์ที่ต้องการแก้ไขได้ ได้แก่ title, description,
+        due_date, status, user_id และ category_id
+      operationId: patchTask
       requestBody:
         required: true
         content:
@@ -337,146 +266,106 @@ paths:
               status: done
       responses:
         "200":
-          description: แก้ไขข้อมูลงานสำเร็จ
+          description: แก้ไขงานสำเร็จ
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - message
-                  - data
-                properties:
-                  message:
-                    type: string
-                    example: แก้ไขข้อมูลงานสำเร็จ
-                  data:
-                    $ref: "#/components/schemas/TaskWriteResponse"
+                $ref: "#/components/schemas/TaskMutationResponse"
         "400":
-          description: ไม่ได้ระบุข้อมูลที่ต้องการแก้ไข หรือข้อมูลไม่ถูกต้อง
+          description: ไม่มีข้อมูลที่แก้ไขได้ หรือฟิลด์/ID ไม่ถูกต้อง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: NO_UPDATES
-                  message: กรุณาระบุข้อมูลที่ต้องการแก้ไข
+              examples:
+                noUpdates:
+                  summary: ไม่ได้ส่งข้อมูล
+                  value:
+                    error:
+                      code: NO_UPDATES
+                      message: กรุณาระบุข้อมูลที่ต้องการแก้ไข
+                invalidFields:
+                  summary: ฟิลด์ไม่อนุญาต
+                  value:
+                    error:
+                      code: INVALID_FIELDS
+                      message: ไม่อนุญาตให้แก้ไขฟิลด์ที่ระบุ
         "404":
-          description: ไม่พบงาน ผู้ใช้ หรือหมวดหมู่ที่อ้างอิง
+          description: ไม่พบงานหรือข้อมูลอ้างอิง
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: NOT_FOUND
-                  message: ไม่พบข้อมูลงาน
         "409":
           $ref: "#/components/responses/DuplicateTaskTitle"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      tags:
-        - Tasks
+      tags: [Tasks]
       summary: ลบงานตาม ID
-      description: ลบงานที่มี ID ตรงกับค่าที่ระบุ
       operationId: deleteTask
       responses:
         "200":
-          description: ลบข้อมูลสำเร็จ
+          description: ลบงานสำเร็จ
           content:
             application/json:
               schema:
                 type: object
-                required:
-                  - message
+                required: [message, data]
                 properties:
                   message:
                     type: string
                     example: ลบข้อมูลสำเร็จ
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
               example:
                 message: ลบข้อมูลสำเร็จ
+                data:
+                  id: 1
         "400":
-          description: รูปแบบ ID ไม่ถูกต้อง
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: INVALID_ID
-                  message: ID ต้องเป็นตัวเลขจำนวนเต็มที่มากกว่าหรือเท่ากับ 1
+          $ref: "#/components/responses/InvalidId"
         "404":
-          description: ไม่พบงานที่ระบุ
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error:
-                  code: NOT_FOUND
-                  message: ไม่พบข้อมูลงาน
+          $ref: "#/components/responses/TaskNotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
   /api/external/todo:
     get:
-      tags:
-        - External API
-      summary: ดึงข้อมูล Todo จาก External API
+      tags: [External API]
+      summary: เรียก External Todo API
       description: |
-        เรียก External API ผ่าน service ซึ่งมี retry และ timeout
-        หากเรียกบริการภายนอกไม่สำเร็จ ระบบอาจคืนข้อมูล fallback
+        เรียกใช้ External API ผ่าน service โดยใช้ EXTERNAL_API_URL
+        หากไม่ได้ตั้งค่า จะใช้ https://jsonplaceholder.typicode.com/todos/1
+        กำหนด timeout 3 วินาทีต่อครั้ง และ retry สูงสุด 2 ครั้ง
+        (รวมการเรียกได้สูงสุด 3 ครั้ง) เมื่อเกิดข้อผิดพลาดที่ retry ได้
+        หากทุกครั้งล้มเหลว route จะตอบ HTTP 200 พร้อมข้อมูล fallback
       operationId: getExternalTodo
       responses:
         "200":
-          description: ได้ข้อมูลจาก External API หรือข้อมูลสำรอง
+          description: ได้ข้อมูลจากบริการภายนอกหรือข้อมูลสำรอง
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - message
-                properties:
-                  message:
-                    type: string
-                  success:
-                    type: boolean
-                  source:
-                    type: string
-                    enum:
-                      - external_api
-                      - fallback
-                  warning:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      userId:
-                        type: integer
-                      id:
-                        type: integer
-                      title:
-                        type: string
-                      completed:
-                        type: boolean
-                    additionalProperties: true
-                additionalProperties: true
+                $ref: "#/components/schemas/ExternalTodoResponse"
               examples:
                 externalSuccess:
-                  summary: External API สำเร็จ
+                  summary: ได้ข้อมูลจากบริการภายนอก
                   value:
                     message: ดึงข้อมูลจาก External API สำเร็จ
                     success: true
-                    source: external_api
+                    source: external-api
                     data:
                       userId: 1
                       id: 1
                       title: delectus aut autem
                       completed: false
                 fallback:
-                  summary: ใช้ข้อมูลสำรองเมื่อ External API ไม่พร้อมใช้งาน
+                  summary: ใช้ข้อมูลสำรอง
                   value:
                     message: External API ไม่พร้อมใช้งาน ใช้ข้อมูลสำรองแทน
                     success: true
@@ -487,8 +376,69 @@ paths:
                       id: 1
                       title: ตัวอย่างข้อมูลสำรอง
                       completed: false
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+
+  /graphql:
+    get:
+      tags: [GraphQL]
+      summary: เปิด GraphiQL สำหรับทดลอง Query
+      description: Express GraphQL เปิด GraphiQL สำหรับทดลอง query ผ่านเบราว์เซอร์
+      operationId: graphqlGet
+      responses:
+        "200":
+          description: หน้า GraphiQL หรือผลลัพธ์ GraphQL
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Request หรือ query ไม่ถูกต้อง
+
+    post:
+      tags: [GraphQL]
+      summary: ส่ง GraphQL Query หรือ Mutation
+      operationId: graphqlPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  example: query { __typename }
+                variables:
+                  type: object
+                  additionalProperties: true
+                operationName:
+                  type: string
+      responses:
+        "200":
+          description: ผลลัพธ์ GraphQL ซึ่งอาจมี data หรือ errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    additionalProperties: true
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "400":
+          description: Request หรือ JSON ไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   responses:
@@ -504,7 +454,7 @@ components:
               message: เกิดข้อผิดพลาดที่ไม่คาดคิดภายในระบบ
 
     DuplicateTaskTitle:
-      description: ชื่อ Task ซ้ำกับข้อมูลที่มีอยู่ในระบบ
+      description: ชื่องานซ้ำกับข้อมูลในระบบ
       content:
         application/json:
           schema:
@@ -512,11 +462,34 @@ components:
           example:
             error:
               code: DUPLICATE_TASK_TITLE
-              message: ชื่อ Task นี้มีอยู่ในระบบแล้ว
+              message: ชื่องานนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น
+
+    InvalidId:
+      description: ID ต้องเป็นจำนวนเต็มบวก
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: INVALID_ID
+              message: id ต้องเป็นจำนวนเต็มบวก
+
+    TaskNotFound:
+      description: ไม่พบงานตาม ID
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: NOT_FOUND
+              message: ไม่พบข้อมูลงาน
 
   schemas:
     TaskStatus:
       type: string
+      description: สถานะงานที่ระบบใช้งานตามข้อมูลปัจจุบัน ทั้งนี้ route ไม่ได้ตรวจสอบ enum นี้โดยตรง
       enum:
         - pending
         - in_progress
@@ -535,21 +508,23 @@ components:
         title:
           type: string
           minLength: 1
-          example: ทำรายงาน API
+          example: ทบทวนบทเรียนก่อนสอบ
         description:
           type: string
           nullable: true
-          example: จัดทำเอกสาร API
+          example: อ่านและสรุปเนื้อหา
         due_date:
           type: string
-          format: date
+          description: วันที่กำหนดส่ง แนะนำรูปแบบ YYYY-MM-DD
           example: "2026-10-30"
         status:
-          $ref: "#/components/schemas/TaskStatus"
+          type: string
+          description: ต้องส่งค่า แต่ route ไม่ได้บังคับ enum ของสถานะ
+          example: pending
         user_id:
           type: integer
           minimum: 1
-          example: 1
+          example: 2
         category_id:
           type: integer
           minimum: 1
@@ -558,107 +533,59 @@ components:
     TaskPatchInput:
       type: object
       minProperties: 1
+      additionalProperties: false
       properties:
         title:
           type: string
           minLength: 1
-          example: ทำรายงาน API ฉบับแก้ไข
         description:
           type: string
           nullable: true
-          example: ปรับปรุงเอกสาร API
         due_date:
           type: string
-          format: date
-          example: "2026-10-31"
+          description: วันที่กำหนดส่ง
         status:
-          $ref: "#/components/schemas/TaskStatus"
+          type: string
         user_id:
           type: integer
           minimum: 1
-          example: 1
         category_id:
           type: integer
           minimum: 1
-          example: 1
 
     Task:
       type: object
       properties:
         id:
           type: integer
-          example: 1
         title:
           type: string
-          example: ทำ project-phase1
         description:
           type: string
           nullable: true
-          example: ทำให้เสร็จภายในกำหนดเวลา
         due_date:
           type: string
           format: date-time
-          example: "2026-10-28T17:00:00.000Z"
         status:
-          $ref: "#/components/schemas/TaskStatus"
+          type: string
         user_id:
           type: integer
-          example: 1
         category_id:
           type: integer
-          example: 1
         created_at:
           type: string
           format: date-time
-          example: "2026-07-01T10:00:00.000Z"
+          nullable: true
+      additionalProperties: true
 
     TaskListItem:
       allOf:
         - $ref: "#/components/schemas/Task"
         - type: object
           properties:
-            category:
-              type: string
-              nullable: true
-              example: Project
             category_name:
               type: string
               nullable: true
-              example: Project
-
-    TaskWriteResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 10
-        title:
-          type: string
-          example: ทำรายงาน API
-        description:
-          type: string
-          nullable: true
-          example: จัดทำเอกสาร API
-        category:
-          type: string
-          nullable: true
-          example: Project
-        due_date:
-          type: string
-          format: date-time
-          example: "2026-10-30T00:00:00.000Z"
-        status:
-          $ref: "#/components/schemas/TaskStatus"
-        user_id:
-          type: integer
-          example: 1
-        category_id:
-          type: integer
-          example: 1
-        created_at:
-          type: string
-          format: date-time
-          example: "2026-10-24T10:00:00.000Z"
 
     TaskDetail:
       allOf:
@@ -671,43 +598,79 @@ components:
               properties:
                 id:
                   type: integer
-                  example: 1
                 name:
                   type: string
-                  example: Example User
                 email:
                   type: string
                   format: email
-                  example: user@example.com
             category:
               type: object
               nullable: true
               properties:
                 id:
                   type: integer
-                  example: 1
                 name:
                   type: string
-                  example: Project
                 description:
                   type: string
                   nullable: true
-                  example: หมวดหมู่สำหรับงานโครงการ
+
+    TaskMutationResponse:
+      type: object
+      required: [message, data, notification]
+      properties:
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/Task"
+        notification:
+          type: object
+          description: ผลการบันทึก Notification ลง Console; ไม่ได้ส่งอีเมลหรือ Push Notification จริง
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
+          additionalProperties: true
+
+    ExternalTodoResponse:
+      type: object
+      required: [message, success, data]
+      properties:
+        message:
+          type: string
+        success:
+          type: boolean
+        source:
+          type: string
+          enum:
+            - external-api
+            - fallback
+        warning:
+          type: string
+        data:
+          type: object
+          properties:
+            userId:
+              type: integer
+            id:
+              type: integer
+            title:
+              type: string
+            completed:
+              type: boolean
+          additionalProperties: true
+      additionalProperties: true
 
     ErrorResponse:
       type: object
-      required:
-        - error
+      required: [error]
       properties:
         error:
           type: object
-          required:
-            - code
-            - message
+          required: [code, message]
           properties:
             code:
               type: string
-              example: NOT_FOUND
             message:
               type: string
-              example: ไม่พบข้อมูลงาน

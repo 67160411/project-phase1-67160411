@@ -1,4 +1,5 @@
 const API_URL = "/api/v1/tasks";
+const DEFAULT_USER_ID = 1;
 
 const taskForm = document.querySelector("#taskForm");
 const taskList = document.querySelector("#taskList");
@@ -208,7 +209,6 @@ function renderTasks() {
             <p class="task-description">${description}</p>
 
             <div class="task-meta">
-              <span>รหัสงาน: ${id}</span>
               <span>หมวดหมู่: ${escapeHtml(category)}</span>
               <span>ครบกำหนด: ${formatDate(task.due_date)}</span>
             </div>
@@ -298,13 +298,8 @@ async function loadTasks() {
 
 function validateTaskForm() {
   const title = document.querySelector("#title").value.trim();
-
   const dueDate = document.querySelector("#due_date").value;
-
-  const userId = Number(document.querySelector("#user_id").value);
-
   const categoryId = Number(document.querySelector("#category_id").value);
-
   const status = document.querySelector("#status").value;
 
   if (!title) {
@@ -323,10 +318,6 @@ function validateTaskForm() {
     throw new Error("กรุณาเลือกวันครบกำหนดที่ถูกต้อง");
   }
 
-  if (!Number.isInteger(userId) || userId <= 0) {
-    throw new Error("User ID ต้องเป็นจำนวนเต็มบวก");
-  }
-
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
     throw new Error("Category ID ต้องเป็นจำนวนเต็มบวก");
   }
@@ -340,15 +331,20 @@ function validateTaskForm() {
     description: document.querySelector("#description").value.trim(),
     due_date: dueDate,
     status,
-    user_id: userId,
+    user_id: DEFAULT_USER_ID,
     category_id: categoryId,
   };
 }
 
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  event.stopPropagation();
 
   if (isSubmitting) return;
+
+  isSubmitting = true;
+  submitButton.disabled = true;
+  submitLabel.textContent = "กำลังบันทึก...";
 
   hideMessage(formMessage);
 
@@ -358,12 +354,12 @@ taskForm.addEventListener("submit", async (event) => {
     payload = validateTaskForm();
   } catch (error) {
     showMessage(formMessage, error.message, "error");
+    isSubmitting = false;
+    submitButton.disabled = false;
+    submitLabel.textContent =
+      editingTaskId !== null ? "บันทึกการแก้ไข" : "+ เพิ่มงาน";
     return;
   }
-
-  isSubmitting = true;
-  submitButton.disabled = true;
-  submitLabel.textContent = "กำลังบันทึก...";
 
   const isEditing = editingTaskId !== null;
 
@@ -391,7 +387,8 @@ taskForm.addEventListener("submit", async (event) => {
   } finally {
     isSubmitting = false;
     submitButton.disabled = false;
-    submitLabel.textContent = "+ เพิ่มงาน";
+    submitLabel.textContent =
+      editingTaskId !== null ? "บันทึกการแก้ไข" : "+ เพิ่มงาน";
   }
 });
 
@@ -407,8 +404,6 @@ function startEditTask(task) {
     : "";
 
   document.querySelector("#status").value = task.status ?? "pending";
-
-  document.querySelector("#user_id").value = task.user_id ?? "";
 
   document.querySelector("#category_id").value = String(task.category_id ?? "");
 

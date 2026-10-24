@@ -100,9 +100,19 @@ async function notifySafely(task, event) {
 // ==========================================
 // GRAPHQL
 // ==========================================
-
 app.use(
   "/graphql",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  }),
   graphqlHTTP({
     schema,
     rootValue: resolvers,
@@ -696,9 +706,13 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ==========================================
 
-app.listen(PORT, () => {
-  console.log(`Server กำลังทำงานที่ http://localhost:${PORT}`);
-  console.log(`Swagger UI: http://localhost:${PORT}/api-docs`);
-  console.log(`GraphQL: http://localhost:${PORT}/graphql`);
-  console.log(`TaskFlow: http://localhost:${PORT}/app/`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server กำลังทำงานที่ http://localhost:${PORT}`);
+    console.log(`Swagger UI: http://localhost:${PORT}/api-docs`);
+    console.log(`GraphQL: http://localhost:${PORT}/graphql`);
+    console.log(`TaskFlow: http://localhost:${PORT}/app/`);
+  });
+}
+
+module.exports = app;
