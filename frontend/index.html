@@ -3,17 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#5b4bdb" />
+    <meta name="theme-color" content="#6d5ce8" />
     <meta
       name="description"
       content="TaskFlow ระบบจัดการงาน ติดตามสถานะ และวันครบกำหนด"
     />
+
     <title>TaskFlow | จัดการงาน</title>
+
     <link rel="stylesheet" href="/app/style.css" />
     <script src="/app/app.js" defer></script>
   </head>
 
   <body>
+    <!-- ===== Top Navigation ===== -->
     <header class="topbar">
       <a class="brand" href="/app/" aria-label="TaskFlow หน้าหลัก">
         <span class="brand-icon" aria-hidden="true">✓</span>
@@ -26,15 +29,16 @@
     </header>
 
     <main class="container">
+      <!-- ===== Welcome Section ===== -->
       <section class="hero">
         <p class="eyebrow">TASK MANAGEMENT SYSTEM</p>
-        <h1>จัดการงานของคุณ</h1>
-        <p class="subtitle">
-          รวมรายการงาน ติดตามสถานะ และจัดการงานได้ในหน้าเดียว
-        </p>
+
+        <h1>ระบบจัดการงาน</h1>
+
+        <p class="subtitle">วางแผน ติดตามสถานะ และจัดการงานทั้งหมดของคุณ</p>
       </section>
 
-      <!-- สรุปจำนวนงาน -->
+      <!-- ===== Task Statistics ===== -->
       <section class="stats" aria-label="สรุปสถานะงาน">
         <article class="stat-card">
           <span>งานทั้งหมด</span>
@@ -57,8 +61,8 @@
         </article>
       </section>
 
-      <!-- ฟอร์มเพิ่มงาน -->
-      <section class="panel">
+      <!-- ===== Add / Edit Task Form ===== -->
+      <section class="panel" id="taskFormPanel">
         <div class="section-heading">
           <div>
             <p class="eyebrow">NEW TASK</p>
@@ -77,6 +81,7 @@
           <div class="form-grid">
             <label class="field field-full" for="title">
               ชื่องาน <span class="required">*</span>
+
               <input
                 type="text"
                 id="title"
@@ -90,21 +95,24 @@
 
             <label class="field field-full" for="description">
               รายละเอียด
+
               <textarea
                 id="description"
                 name="description"
                 rows="3"
-                placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
+                placeholder="เพิ่มรายละเอียดของงานที่นี่..."
               ></textarea>
             </label>
 
             <label class="field" for="due_date">
               วันครบกำหนด <span class="required">*</span>
+
               <input type="date" id="due_date" name="due_date" required />
             </label>
 
             <label class="field" for="status">
               สถานะ <span class="required">*</span>
+
               <select id="status" name="status" required>
                 <option value="pending">รอดำเนินการ</option>
                 <option value="in_progress">กำลังดำเนินการ</option>
@@ -112,11 +120,9 @@
               </select>
             </label>
 
-            <!-- ไม่แสดง User ID ให้ผู้ใช้กรอก -->
-            <!-- app.js ต้องกำหนด user_id: 1 ใน Request เอง -->
-
             <label class="field" for="category_id">
               หมวดหมู่ <span class="required">*</span>
+
               <select id="category_id" name="category_id" required>
                 <option value="1">Project</option>
                 <option value="2">Homework</option>
@@ -141,8 +147,8 @@
         </form>
       </section>
 
-      <!-- รายการงาน -->
-      <section class="panel">
+      <!-- ===== Task List ===== -->
+      <section class="panel" id="taskListPanel">
         <div class="list-heading">
           <div>
             <p class="eyebrow">YOUR WORKSPACE</p>
@@ -158,9 +164,11 @@
           </button>
         </div>
 
+        <!-- Search and Filter -->
         <div class="toolbar">
           <label class="search-box">
             <span aria-hidden="true">⌕</span>
+
             <input
               type="search"
               id="searchInput"
@@ -171,6 +179,7 @@
 
           <label class="filter-box">
             <span class="sr-only">กรองตามสถานะ</span>
+
             <select id="statusFilter">
               <option value="all">ทุกสถานะ</option>
               <option value="pending">รอดำเนินการ</option>
@@ -197,9 +206,51 @@
         </div>
       </section>
 
+      <!-- ===== Footer ===== -->
       <footer>
-        <p>TaskFlow · Client-Facing Frontend · Week 15</p>
+        <p>TaskFlow · Task Management System · Week 15</p>
       </footer>
     </main>
+
+    <!-- ===== Custom Delete Confirmation Modal ===== -->
+    <div id="deleteModal" class="delete-modal" hidden aria-hidden="true">
+      <div class="delete-modal-backdrop" data-close-delete></div>
+
+      <section
+        class="delete-modal-card"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="deleteModalTitle"
+        aria-describedby="deleteModalDescription"
+      >
+        <div class="delete-modal-icon" aria-hidden="true">♲</div>
+
+        <h2 id="deleteModalTitle">ยืนยันการลบงาน?</h2>
+
+        <p id="deleteModalDescription" class="delete-modal-description">
+          คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?
+
+          <span id="deleteTaskTitle" class="delete-modal-task"></span>
+        </p>
+
+        <div class="delete-modal-actions">
+          <button
+            type="button"
+            id="cancelDeleteButton"
+            class="button button-secondary"
+          >
+            ยกเลิก
+          </button>
+
+          <button
+            type="button"
+            id="confirmDeleteButton"
+            class="button delete-confirm-button"
+          >
+            ยืนยันการลบ
+          </button>
+        </div>
+      </section>
+    </div>
   </body>
 </html>

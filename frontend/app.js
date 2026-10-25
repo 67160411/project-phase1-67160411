@@ -1,6 +1,7 @@
 const API_URL = "/api/v1/tasks";
 const DEFAULT_USER_ID = 1;
 
+// ===== DOM Elements =====
 const taskForm = document.querySelector("#taskForm");
 const taskList = document.querySelector("#taskList");
 const listMessage = document.querySelector("#listMessage");
@@ -10,10 +11,19 @@ const submitLabel = document.querySelector("#submitLabel");
 const apiStatus = document.querySelector("#apiStatus");
 const searchInput = document.querySelector("#searchInput");
 const statusFilter = document.querySelector("#statusFilter");
+const refreshButton = document.querySelector("#refreshButton");
 
+// Delete confirmation modal
+const deleteModal = document.querySelector("#deleteModal");
+const deleteTaskTitle = document.querySelector("#deleteTaskTitle");
+const cancelDeleteButton = document.querySelector("#cancelDeleteButton");
+const confirmDeleteButton = document.querySelector("#confirmDeleteButton");
+
+// ===== Application State =====
 let tasks = [];
 let editingTaskId = null;
 let isSubmitting = false;
+let pendingDeleteTaskId = null;
 
 const STATUS_LABELS = {
   pending: "รอดำเนินการ",
@@ -27,6 +37,7 @@ const CATEGORY_LABELS = {
   3: "General",
 };
 
+// ===== Utility Functions =====
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => {
     const entities = {
@@ -42,15 +53,20 @@ function escapeHtml(value) {
 }
 
 function showMessage(element, message, type = "info") {
+  if (!element) return;
+
   element.textContent = message;
   element.className = `notice ${type}`;
 }
 
 function hideMessage(element) {
+  if (!element) return;
+
   element.textContent = "";
   element.className = "notice hidden";
 }
 
+// ===== API Request =====
 async function requestApi(url, options = {}) {
   const response = await fetch(url, {
     ...options,
@@ -83,6 +99,7 @@ async function requestApi(url, options = {}) {
   return body;
 }
 
+// ===== Date Formatting =====
 function formatDate(value) {
   if (!value) return "ไม่ได้ระบุ";
 
@@ -94,7 +111,21 @@ function formatDate(value) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+function setDefaultDueDate() {
+  const input = document.querySelector("#due_date");
+
+  if (!input || input.value) return;
+
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+
+  input.value = localDate.toISOString().slice(0, 10);
+}
+
+// ===== API Status =====
 function setApiStatus(online) {
+  if (!apiStatus) return;
+
   apiStatus.textContent = online
     ? "● API เชื่อมต่อแล้ว"
     : "● เชื่อมต่อ API ไม่สำเร็จ";
@@ -102,6 +133,7 @@ function setApiStatus(online) {
   apiStatus.className = `api-status ${online ? "online" : "offline"}`;
 }
 
+// ===== Statistics =====
 function updateStats() {
   document.querySelector("#totalCount").textContent = tasks.length;
 
@@ -109,7 +141,7 @@ function updateStats() {
     (task) => task.status === "pending",
   ).length;
 
-  document.getElementById("inProgressCount").textContent = tasks.filter(
+  document.querySelector("#inProgressCount").textContent = tasks.filter(
     (task) => task.status === "in_progress",
   ).length;
 
@@ -118,11 +150,11 @@ function updateStats() {
   ).length;
 }
 
+// ===== Render Task List =====
 function renderTasks() {
   const keyword = searchInput.value.trim().toLowerCase();
   const selectedStatus = statusFilter.value;
 
-  // 1. กรองรายการตามคำค้นหาและสถานะ
   const filteredTasks = tasks.filter((task) => {
     const matchesKeyword = String(task.title ?? "")
       .toLowerCase()
@@ -134,19 +166,16 @@ function renderTasks() {
     return matchesKeyword && matchesStatus;
   });
 
-  // 2. เรียงงานที่เสร็จแล้วไว้ล่างสุด
-  //    งานที่ยังไม่เสร็จเรียงวันครบกำหนดจากใกล้ไปไกล
+  // งานที่เสร็จแล้วอยู่ล่างสุด
+  // งานที่เหลือเรียงตามวันครบกำหนด
   filteredTasks.sort((a, b) => {
     const aDone = a.status === "done";
     const bDone = b.status === "done";
 
-    // งานที่เสร็จแล้วอยู่ล่างสุดเสมอ
     if (aDone !== bDone) {
       return aDone ? 1 : -1;
     }
 
-    // เรียงตามวันครบกำหนดจากน้อยไปมาก
-    // งานที่ไม่มีวันครบกำหนดจะอยู่ท้ายกลุ่ม
     const aDate = a.due_date ? String(a.due_date).slice(0, 10) : "9999-12-31";
 
     const bDate = b.due_date ? String(b.due_date).slice(0, 10) : "9999-12-31";
@@ -155,11 +184,9 @@ function renderTasks() {
       return aDate.localeCompare(bDate);
     }
 
-    // ถ้าวันครบกำหนดตรงกัน ให้เรียงตาม ID
     return Number(a.id) - Number(b.id);
   });
 
-  // 3. กรณีไม่พบงาน
   if (filteredTasks.length === 0) {
     taskList.innerHTML = `
       <div class="empty-state">
@@ -170,7 +197,6 @@ function renderTasks() {
     return;
   }
 
-  // 4. แสดงรายการงาน
   taskList.innerHTML = filteredTasks
     .map((task) => {
       const id = Number(task.id);
@@ -191,9 +217,9 @@ function renderTasks() {
         (typeof task.category === "string"
           ? task.category
           : task.category?.name) ||
+        CATEGORY_LABELS[task.category_id] ||
         `Category ID ${task.category_id ?? "-"}`;
 
-      // ปุ่มเปลี่ยนสถานะตามสถานะปัจจุบัน
       const actionLabel =
         task.status === "pending"
           ? "ทำเครื่องหมายกำลังดำเนินการ"
@@ -260,8 +286,11 @@ function renderTasks() {
     .join("");
 }
 
+// ===== Load Tasks =====
 async function loadTasks() {
   taskList.innerHTML = '<div class="loading">กำลังโหลดรายการงาน...</div>';
+
+  taskList.setAttribute("aria-busy", "true");
 
   try {
     const result = await requestApi(API_URL);
@@ -275,13 +304,7 @@ async function loadTasks() {
     setApiStatus(true);
     updateStats();
     renderTasks();
-
-    console.log(
-      "จำนวนงานทั้งหมด:",
-      tasks.length,
-      "งานที่เสร็จแล้ว:",
-      tasks.filter((task) => task.status === "done"),
-    );
+    hideMessage(listMessage);
   } catch (error) {
     setApiStatus(false);
 
@@ -293,9 +316,12 @@ async function loadTasks() {
     `;
 
     showMessage(listMessage, error.message, "error");
+  } finally {
+    taskList.setAttribute("aria-busy", "false");
   }
 }
 
+// ===== Validate Task Form =====
 function validateTaskForm() {
   const title = document.querySelector("#title").value.trim();
   const dueDate = document.querySelector("#due_date").value;
@@ -336,9 +362,9 @@ function validateTaskForm() {
   };
 }
 
+// ===== Add / Edit Task =====
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  event.stopPropagation();
 
   if (isSubmitting) return;
 
@@ -362,15 +388,13 @@ taskForm.addEventListener("submit", async (event) => {
   }
 
   const isEditing = editingTaskId !== null;
+  const taskUrl = isEditing ? `${API_URL}/${editingTaskId}` : API_URL;
 
   try {
-    const result = await requestApi(
-      isEditing ? `${API_URL}/${editingTaskId}` : API_URL,
-      {
-        method: isEditing ? "PUT" : "POST",
-        body: JSON.stringify(payload),
-      },
-    );
+    const result = await requestApi(taskUrl, {
+      method: isEditing ? "PUT" : "POST",
+      body: JSON.stringify(payload),
+    });
 
     editingTaskId = null;
     taskForm.reset();
@@ -392,11 +416,11 @@ taskForm.addEventListener("submit", async (event) => {
   }
 });
 
+// ===== Edit Task =====
 function startEditTask(task) {
   editingTaskId = Number(task.id);
 
   document.querySelector("#title").value = task.title ?? "";
-
   document.querySelector("#description").value = task.description ?? "";
 
   document.querySelector("#due_date").value = task.due_date
@@ -411,12 +435,117 @@ function startEditTask(task) {
 
   showMessage(formMessage, `กำลังแก้ไขงาน ID ${task.id}`, "info");
 
-  taskForm.scrollIntoView({
+  document.querySelector("#taskFormPanel").scrollIntoView({
     behavior: "smooth",
     block: "start",
   });
 }
 
+// ===== Delete Confirmation Modal =====
+function openDeleteModal(task) {
+  if (
+    !deleteModal ||
+    !deleteTaskTitle ||
+    !cancelDeleteButton ||
+    !confirmDeleteButton
+  ) {
+    // กรณี HTML ไม่มีกล่อง Modal ให้ใช้กล่องยืนยันของเบราว์เซอร์แทน
+    if (
+      window.confirm(`ต้องการลบงาน "${task.title}" (ID ${task.id}) ใช่หรือไม่?`)
+    ) {
+      deleteTask(Number(task.id));
+    }
+
+    return;
+  }
+
+  pendingDeleteTaskId = Number(task.id);
+  deleteTaskTitle.textContent = task.title || `งาน ID ${task.id}`;
+
+  confirmDeleteButton.disabled = false;
+  confirmDeleteButton.textContent = "ยืนยันการลบ";
+
+  deleteModal.hidden = false;
+  deleteModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+
+  cancelDeleteButton.focus();
+}
+
+function closeDeleteModal() {
+  if (!deleteModal) return;
+
+  deleteModal.hidden = true;
+  deleteModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+
+  pendingDeleteTaskId = null;
+}
+
+async function deleteTask(taskId) {
+  try {
+    const result = await requestApi(`${API_URL}/${taskId}`, {
+      method: "DELETE",
+    });
+
+    closeDeleteModal();
+
+    await loadTasks();
+
+    showMessage(listMessage, result.message || "ลบงานสำเร็จ", "success");
+  } catch (error) {
+    showMessage(listMessage, error.message || "ลบงานไม่สำเร็จ", "error");
+  }
+}
+
+cancelDeleteButton?.addEventListener("click", () => {
+  closeDeleteModal();
+});
+
+deleteModal?.addEventListener("click", (event) => {
+  if (event.target.closest("[data-close-delete]")) {
+    closeDeleteModal();
+  }
+});
+
+confirmDeleteButton?.addEventListener("click", async () => {
+  if (pendingDeleteTaskId === null || confirmDeleteButton.disabled) {
+    return;
+  }
+
+  const taskId = pendingDeleteTaskId;
+
+  confirmDeleteButton.disabled = true;
+  confirmDeleteButton.textContent = "กำลังลบ...";
+
+  try {
+    const result = await requestApi(`${API_URL}/${taskId}`, {
+      method: "DELETE",
+    });
+
+    closeDeleteModal();
+
+    await loadTasks();
+
+    showMessage(listMessage, result.message || "ลบงานสำเร็จ", "success");
+  } catch (error) {
+    showMessage(listMessage, error.message || "ลบงานไม่สำเร็จ", "error");
+
+    // ถ้าลบไม่สำเร็จ ให้ปิดกล่องและแจ้งข้อผิดพลาด
+    closeDeleteModal();
+  } finally {
+    confirmDeleteButton.disabled = false;
+    confirmDeleteButton.textContent = "ยืนยันการลบ";
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && deleteModal && !deleteModal.hidden) {
+    closeDeleteModal();
+  }
+});
+
+// ===== Task List Actions =====
 taskList.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
 
@@ -432,9 +561,14 @@ taskList.addEventListener("click", async (event) => {
     return;
   }
 
-  // แก้ไข: นำข้อมูลมาใส่ฟอร์ม
   if (action === "edit") {
     startEditTask(task);
+    return;
+  }
+
+  if (action === "delete") {
+    hideMessage(listMessage);
+    openDeleteModal(task);
     return;
   }
 
@@ -462,13 +596,16 @@ taskList.addEventListener("click", async (event) => {
 
       const result = await requestApi(`${API_URL}/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({
+          status: nextStatus,
+        }),
       });
 
       tasks = tasks.map((item) =>
-        String(item.id) === String(id) ? { ...item, status: nextStatus } : item,
+        Number(item.id) === id ? { ...item, status: nextStatus } : item,
       );
 
+      updateStats();
       renderTasks();
 
       showMessage(
@@ -477,20 +614,6 @@ taskList.addEventListener("click", async (event) => {
           `เปลี่ยนสถานะเป็น "${STATUS_LABELS[nextStatus]}" สำเร็จ`,
         "success",
       );
-    } else if (action === "delete") {
-      const confirmed = window.confirm(
-        `ต้องการลบงาน "${task.title}" (ID ${id}) ใช่หรือไม่?`,
-      );
-
-      if (!confirmed) return;
-
-      const result = await requestApi(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
-
-      await loadTasks();
-
-      showMessage(listMessage, result.message || "ลบงานสำเร็จ", "success");
     }
   } catch (error) {
     showMessage(listMessage, error.message, "error");
@@ -499,11 +622,13 @@ taskList.addEventListener("click", async (event) => {
   }
 });
 
-document.querySelector("#refreshButton").addEventListener("click", loadTasks);
+// ===== Search / Filter / Refresh =====
+refreshButton.addEventListener("click", loadTasks);
 
 searchInput.addEventListener("input", renderTasks);
 statusFilter.addEventListener("change", renderTasks);
 
+// ===== Reset Form =====
 taskForm.addEventListener("reset", () => {
   editingTaskId = null;
   submitLabel.textContent = "+ เพิ่มงาน";
@@ -512,17 +637,6 @@ taskForm.addEventListener("reset", () => {
   window.setTimeout(setDefaultDueDate, 0);
 });
 
-function setDefaultDueDate() {
-  const input = document.querySelector("#due_date");
-
-  if (input.value) return;
-
-  const now = new Date();
-
-  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-
-  input.value = localDate.toISOString().slice(0, 10);
-}
-
+// ===== Initialize App =====
 setDefaultDueDate();
 loadTasks();
