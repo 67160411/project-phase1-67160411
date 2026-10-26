@@ -1,4 +1,4 @@
-const pool = require("./src/db");
+const pool = require("./db");
 
 // แปลงข้อมูล Task จาก MySQL ให้ตรงกับ GraphQL Schema
 function formatTask(row) {
