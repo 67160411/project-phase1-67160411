@@ -378,27 +378,10 @@ paths:
                       completed: false
 
   /graphql:
-    get:
-      tags: [GraphQL]
-      summary: เปิด GraphiQL สำหรับทดลอง Query
-      description: Express GraphQL เปิด GraphiQL สำหรับทดลอง query ผ่านเบราว์เซอร์
-      operationId: graphqlGet
-      responses:
-        "200":
-          description: หน้า GraphiQL หรือผลลัพธ์ GraphQL
-          content:
-            text/html:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: object
-        "400":
-          description: Request หรือ query ไม่ถูกต้อง
-
     post:
       tags: [GraphQL]
       summary: ส่ง GraphQL Query หรือ Mutation
+      description: ส่งคำสั่ง GraphQL ในรูปแบบ JSON
       operationId: graphqlPost
       requestBody:
         required: true
@@ -406,16 +389,19 @@ paths:
           application/json:
             schema:
               type: object
-              required: [query]
+              required:
+                - query
               properties:
                 query:
                   type: string
-                  example: query { __typename }
+                  example: "{ __typename }"
                 variables:
                   type: object
                   additionalProperties: true
                 operationName:
                   type: string
+            example:
+              query: "{ __typename }"
       responses:
         "200":
           description: ผลลัพธ์ GraphQL ซึ่งอาจมี data หรือ errors
@@ -423,16 +409,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  data:
-                    type: object
-                    nullable: true
-                    additionalProperties: true
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: true
+                additionalProperties: true
         "400":
           description: Request หรือ JSON ไม่ถูกต้อง
           content:

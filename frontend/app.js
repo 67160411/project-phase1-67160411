@@ -1,7 +1,7 @@
 const API_URL = "/api/v1/tasks";
 const DEFAULT_USER_ID = 1;
 
-// ===== DOM Elements =====
+//===== DOM Elements =====
 const taskForm = document.querySelector("#taskForm");
 const taskList = document.querySelector("#taskList");
 const listMessage = document.querySelector("#listMessage");
