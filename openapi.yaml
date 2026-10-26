@@ -381,27 +381,39 @@ paths:
     post:
       tags: [GraphQL]
       summary: ส่ง GraphQL Query หรือ Mutation
-      description: ส่งคำสั่ง GraphQL ในรูปแบบ JSON
+      description: |
+        รองรับการส่ง Query เป็นข้อความด้วย Content-Type application/graphql
+        หรือส่ง JSON ที่มีฟิลด์ query ด้วย application/json
       operationId: graphqlPost
       requestBody:
         required: true
         content:
+          application/graphql:
+            schema:
+              type: string
+            example: |
+              {
+                tasks {
+                  id
+                  title
+                  status
+                }
+              }
           application/json:
             schema:
               type: object
-              required:
-                - query
+              required: [query]
               properties:
                 query:
                   type: string
-                  example: "{ __typename }"
+                  example: "{ tasks { id title status } }"
                 variables:
                   type: object
                   additionalProperties: true
                 operationName:
                   type: string
             example:
-              query: "{ __typename }"
+              query: "{ tasks { id title status } }"
       responses:
         "200":
           description: ผลลัพธ์ GraphQL ซึ่งอาจมี data หรือ errors
@@ -411,7 +423,7 @@ paths:
                 type: object
                 additionalProperties: true
         "400":
-          description: Request หรือ JSON ไม่ถูกต้อง
+          description: Query หรือ Request ไม่ถูกต้อง
           content:
             application/json:
               schema:

@@ -28,13 +28,16 @@ const PORT = process.env.PORT || 3000;
 
 const openapiPath = path.join(__dirname, "..", "openapi.yaml");
 const openapiFile = fs.readFileSync(openapiPath, "utf8");
+const openapiDocument = YAML.parse(openapiFile);
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(YAML.parse(openapiFile)));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
-// เปิดไฟล์ Frontend ผ่าน /app
+// ==========================================
+// FRONTEND
+// ==========================================
+
 app.use("/app", express.static(path.join(__dirname, "../frontend")));
 
-// เปิดหน้าแรกของ Frontend
 app.get("/app", (req, res) => {
   res.redirect("/app/");
 });
@@ -48,12 +51,22 @@ app.use(helmet());
 app.use(
   cors({
     origin: process.env.ALLOWED_ORIGIN || "*",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   }),
 );
 
 app.use(morgan("dev"));
+
+// JSON parser สำหรับ REST API และ GraphQL แบบ JSON
 app.use(express.json({ limit: "10kb" }));
+
+// Text parser สำหรับ GraphQL raw body: Content-Type: application/graphql
+app.use(
+  express.text({
+    type: "application/graphql",
+    limit: "10kb",
+  }),
+);
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -69,7 +82,6 @@ function sendError(res, status, code, message) {
   });
 }
 
-// จัดการกรณีชื่องานซ้ำ
 function handleDuplicateTitle(res, err) {
   if (err && err.code === "ER_DUP_ENTRY") {
     return sendError(
@@ -83,9 +95,13 @@ function handleDuplicateTitle(res, err) {
   return null;
 }
 
-// ป้องกันไม่ให้ Notification ทำให้ API หลักล้มเหลว
+// Notification ต้องไม่ทำให้ API หลักล้มเหลว
 async function notifySafely(task, event) {
   try {
+    if (typeof sendTaskNotification !== "function") {
+      throw new Error("sendTaskNotification is not a function");
+    }
+
     return await sendTaskNotification(task, event);
   } catch (error) {
     console.error("Notification failed:", error.message);
@@ -97,27 +113,51 @@ async function notifySafely(task, event) {
   }
 }
 
+function isForeignKeyError(err) {
+  return (
+    err &&
+    (err.code === "ER_NO_REFERENCED_ROW_2" ||
+      err.code === "ER_NO_REFERENCED_ROW")
+  );
+}
+
+function handleForeignKeyError(res, err) {
+  if (isForeignKeyError(err)) {
+    return sendError(
+      res,
+      404,
+      "FOREIGN_KEY_NOT_FOUND",
+      "ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ",
+    );
+  }
+
+  return null;
+}
+
 // ==========================================
 // GRAPHQL
 // ==========================================
+
+// express-graphql รองรับ body แบบ { query: "..." }.
+// สำหรับ Content-Type: application/graphql ให้แปลงข้อความเป็น object ก่อน
 app.use(
   "/graphql",
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-      },
-    },
-  }),
-  graphqlHTTP({
+  (req, res, next) => {
+    if (typeof req.body === "string") {
+      req.body = { query: req.body };
+    }
+    next();
+  },
+  graphqlHTTP((req) => ({
     schema,
     rootValue: resolvers,
     graphiql: true,
-  }),
+    customFormatErrorFn: (error) => ({
+      message: error.message,
+      ...(error.locations ? { locations: error.locations } : {}),
+      ...(error.path ? { path: error.path } : {}),
+    }),
+  })),
 );
 
 // ==========================================
@@ -132,6 +172,7 @@ app.get("/", (req, res) => {
       externalTodo: "/api/external/todo",
       graphql: "/graphql",
       swagger: "/api-docs",
+      frontend: "/app/",
     },
   });
 });
@@ -173,21 +214,17 @@ app.get("/api/external/todo", async (req, res) => {
 // TASKS API
 // ==========================================
 
-// 1. GET: ดึงรายการงานทั้งหมด
+// 1. GET: รายการงานทั้งหมด
 // รองรับ ?category=ชื่อหมวดหมู่ หรือ ?category_id=1
-
 app.get("/api/v1/tasks", async (req, res, next) => {
   try {
     const { category, category_id } = req.query;
 
     let query = `
-      SELECT
-        t.*,
-        c.name AS category_name
+      SELECT t.*, c.name AS category_name
       FROM tasks t
       LEFT JOIN categories c ON t.category_id = c.id
     `;
-
     const params = [];
 
     if (category) {
@@ -213,17 +250,13 @@ app.get("/api/v1/tasks", async (req, res, next) => {
 
     const [rows] = await pool.query(query, params);
 
-    return res.status(200).json({
-      message: "สำเร็จ",
-      data: rows,
-    });
+    return res.status(200).json({ message: "สำเร็จ", data: rows });
   } catch (err) {
     return next(err);
   }
 });
 
-// 2. GET: ดึงข้อมูลงานตาม ID
-
+// 2. GET: งานตาม ID
 app.get("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -254,7 +287,6 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
     }
 
     const row = rows[0];
-
     const taskData = {
       id: row.id,
       title: row.title,
@@ -264,15 +296,9 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
       user_id: row.user_id,
       category_id: row.category_id,
       created_at: row.created_at,
-
       user: row.u_id
-        ? {
-            id: row.u_id,
-            name: row.u_name,
-            email: row.u_email,
-          }
+        ? { id: row.u_id, name: row.u_name, email: row.u_email }
         : null,
-
       category: row.c_id
         ? {
             id: row.c_id,
@@ -282,20 +308,16 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
         : null,
     };
 
-    return res.status(200).json({
-      message: "สำเร็จ",
-      data: taskData,
-    });
+    return res.status(200).json({ message: "สำเร็จ", data: taskData });
   } catch (err) {
     return next(err);
   }
 });
 
 // 3. POST: เพิ่มงานใหม่
-
 app.post("/api/v1/tasks", async (req, res, next) => {
   const { title, description, due_date, status, user_id, category_id } =
-    req.body;
+    req.body || {};
 
   if (
     !title ||
@@ -328,18 +350,14 @@ app.post("/api/v1/tasks", async (req, res, next) => {
   }
 
   try {
+    const cleanTitle = String(title).trim();
+    const cleanDescription = description || "";
+
     const [result] = await pool.query(
       `INSERT INTO tasks
         (title, description, due_date, status, user_id, category_id)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        String(title).trim(),
-        description || "",
-        due_date,
-        status,
-        userId,
-        categoryId,
-      ],
+      [cleanTitle, cleanDescription, due_date, status, userId, categoryId],
     );
 
     const [rows] = await pool.query("SELECT * FROM tasks WHERE id = ?", [
@@ -348,8 +366,8 @@ app.post("/api/v1/tasks", async (req, res, next) => {
 
     const newTask = rows[0] || {
       id: result.insertId,
-      title: String(title).trim(),
-      description: description || "",
+      title: cleanTitle,
+      description: cleanDescription,
       due_date,
       status,
       user_id: userId,
@@ -365,29 +383,16 @@ app.post("/api/v1/tasks", async (req, res, next) => {
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
+    if (duplicateResponse) return duplicateResponse;
 
-    if (duplicateResponse) {
-      return duplicateResponse;
-    }
-
-    if (
-      err.code === "ER_NO_REFERENCED_ROW_2" ||
-      err.code === "ER_NO_REFERENCED_ROW"
-    ) {
-      return sendError(
-        res,
-        404,
-        "FOREIGN_KEY_NOT_FOUND",
-        "ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ",
-      );
-    }
+    const foreignKeyResponse = handleForeignKeyError(res, err);
+    if (foreignKeyResponse) return foreignKeyResponse;
 
     return next(err);
   }
 });
 
 // 4. PUT: แก้ไขงานทั้งระเบียน
-
 app.put("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -396,7 +401,7 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
   }
 
   const { title, description, due_date, status, user_id, category_id } =
-    req.body;
+    req.body || {};
 
   if (
     !title ||
@@ -431,12 +436,8 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
   try {
     const [result] = await pool.query(
       `UPDATE tasks
-       SET title = ?,
-           description = ?,
-           due_date = ?,
-           status = ?,
-           user_id = ?,
-           category_id = ?
+       SET title = ?, description = ?, due_date = ?, status = ?,
+           user_id = ?, category_id = ?
        WHERE id = ?`,
       [
         String(title).trim(),
@@ -456,14 +457,10 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
     }
 
     const updatedTask = rows[0];
-
     const notification =
       result.affectedRows > 0
         ? await notifySafely(updatedTask, "UPDATED")
-        : {
-            success: true,
-            message: "ข้อมูลไม่มีการเปลี่ยนแปลง",
-          };
+        : { success: true, message: "ข้อมูลไม่มีการเปลี่ยนแปลง" };
 
     return res.status(200).json({
       message: "แก้ไขข้อมูลสำเร็จ",
@@ -472,29 +469,16 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
+    if (duplicateResponse) return duplicateResponse;
 
-    if (duplicateResponse) {
-      return duplicateResponse;
-    }
-
-    if (
-      err.code === "ER_NO_REFERENCED_ROW_2" ||
-      err.code === "ER_NO_REFERENCED_ROW"
-    ) {
-      return sendError(
-        res,
-        404,
-        "FOREIGN_KEY_NOT_FOUND",
-        "ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ",
-      );
-    }
+    const foreignKeyResponse = handleForeignKeyError(res, err);
+    if (foreignKeyResponse) return foreignKeyResponse;
 
     return next(err);
   }
 });
 
 // 5. PATCH: แก้ไขงานบางฟิลด์
-
 app.patch("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
   const updates = req.body;
@@ -522,7 +506,6 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
   ];
 
   const fields = Object.keys(updates);
-
   const invalidFields = fields.filter(
     (field) => !allowedFields.includes(field),
   );
@@ -583,16 +566,11 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     }
 
     const setClause = fields.map((field) => `\`${field}\` = ?`).join(", ");
-
     const values = fields.map((field) => {
-      if (field === "title") {
-        return updates[field].trim();
-      }
-
+      if (field === "title") return updates[field].trim();
       if (field === "user_id" || field === "category_id") {
         return Number(updates[field]);
       }
-
       return updates[field];
     });
 
@@ -606,7 +584,6 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     ]);
 
     const updatedTask = updatedRows[0];
-
     const notification = await notifySafely(updatedTask, "PARTIALLY_UPDATED");
 
     return res.status(200).json({
@@ -616,29 +593,16 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
+    if (duplicateResponse) return duplicateResponse;
 
-    if (duplicateResponse) {
-      return duplicateResponse;
-    }
-
-    if (
-      err.code === "ER_NO_REFERENCED_ROW_2" ||
-      err.code === "ER_NO_REFERENCED_ROW"
-    ) {
-      return sendError(
-        res,
-        404,
-        "FOREIGN_KEY_NOT_FOUND",
-        "ไม่พบข้อมูล user_id หรือ category_id ที่อ้างอิงในระบบ",
-      );
-    }
+    const foreignKeyResponse = handleForeignKeyError(res, err);
+    if (foreignKeyResponse) return foreignKeyResponse;
 
     return next(err);
   }
 });
 
 // 6. DELETE: ลบงานตาม ID
-
 app.delete("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
