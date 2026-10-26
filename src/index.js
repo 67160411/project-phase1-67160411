@@ -46,7 +46,11 @@ app.get("/app", (req, res) => {
 // MIDDLEWARES
 // ==========================================
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  }),
+);
 
 app.use(
   cors({
