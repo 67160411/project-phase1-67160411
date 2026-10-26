@@ -34,7 +34,7 @@ const STATUS_LABELS = {
 const CATEGORY_LABELS = {
   1: "Project",
   2: "Homework",
-  3: "General",
+  3: "Other",
 };
 
 // ===== Utility Functions =====

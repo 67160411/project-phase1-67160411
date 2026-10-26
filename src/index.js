@@ -276,8 +276,7 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
         u.name AS u_name,
         u.email AS u_email,
         c.id AS c_id,
-        c.name AS c_name,
-        c.description AS c_description
+        c.name AS c_name
       FROM tasks t
       LEFT JOIN users u ON t.user_id = u.id
       LEFT JOIN categories c ON t.category_id = c.id
@@ -307,7 +306,6 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
         ? {
             id: row.c_id,
             name: row.c_name,
-            description: row.c_description,
           }
         : null,
     };
@@ -588,7 +586,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     ]);
 
     const updatedTask = updatedRows[0];
-    const notification = await notifySafely(updatedTask, "PARTIALLY_UPDATED");
+    const notification = await notifySafely(updatedTask, "UPDATED");
 
     return res.status(200).json({
       message: "แก้ไขข้อมูลงานสำเร็จ",

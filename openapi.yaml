@@ -14,7 +14,7 @@ servers:
     description: Local development server
 
 tags:
-  - name: General
+  - name: Other
     description: API ทั่วไป
   - name: Tasks
     description: API สำหรับจัดการงาน
@@ -26,7 +26,7 @@ tags:
 paths:
   /:
     get:
-      tags: [General]
+      tags: [Other]
       summary: ตรวจสอบสถานะระบบ
       operationId: getRoot
       responses:
@@ -55,6 +55,9 @@ paths:
                       swagger:
                         type: string
                         example: /api-docs
+                      frontend:
+                        type: string
+                        example: /app/
 
   /api/v1/tasks:
     get:
@@ -110,6 +113,7 @@ paths:
     post:
       tags: [Tasks]
       summary: เพิ่มงานใหม่
+      description: ต้องส่ง title, description(มีหรือไม่มีก็ได้), due_date, status, user_id และ category_id ให้ครบ
       operationId: createTask
       requestBody:
         required: true
@@ -532,9 +536,12 @@ components:
           nullable: true
         due_date:
           type: string
-          description: วันที่กำหนดส่ง
+          description: วันที่กำหนดส่งของงาน
+          example: "2026-10-30"
         status:
           type: string
+          description: สถานะปัจจุบันของงาน
+          example: pending
         user_id:
           type: integer
           minimum: 1

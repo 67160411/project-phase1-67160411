@@ -15,12 +15,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            ""
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": [""]
         },
         "description": "ตรวจสอบสถานะเซิร์ฟเวอร์และ Endpoint ที่ระบบประกาศไว้"
       },
@@ -32,12 +28,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                ""
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": [""]
             }
           },
           "status": "OK",
@@ -61,14 +53,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks"]
         },
         "description": "ดึงรายการงานทั้งหมด สามารถเพิ่ม query parameter category หรือ category_id เพื่อกรองข้อมูล"
       },
@@ -80,14 +66,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
             }
           },
           "status": "OK",
@@ -109,14 +89,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks?category_id=abc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"],
               "query": [
                 {
                   "key": "category_id",
@@ -160,14 +134,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks"]
         },
         "description": "เพิ่มงานใหม่ โดย user_id และ category_id ต้องมีอยู่จริง"
       },
@@ -188,14 +156,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
             }
           },
           "status": "Created",
@@ -226,14 +188,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
             }
           },
           "status": "Bad Request",
@@ -264,14 +220,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
             }
           },
           "status": "Not Found",
@@ -302,14 +252,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
             }
           },
           "status": "Conflict",
@@ -333,15 +277,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks/3",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks",
-            "3"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks", "3"]
         },
         "description": "ดึงรายละเอียดงานตาม ID"
       },
@@ -353,15 +290,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "OK",
@@ -374,7 +304,7 @@
             }
           ],
           "cookie": [],
-          "body": "{\n  \"message\": \"สำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"ทำ project-phase1\",\n    \"description\": \"ทำให้เสร็จภายในกำหนดเวลา\",\n    \"due_date\": \"2026-08-01\",\n    \"status\": \"in_progress\",\n    \"user_id\": 1,\n    \"category_id\": 1,\n    \"created_at\": \"2026-07-01T10:00:00.000Z\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"สมจิต\",\n      \"email\": \"somjit@example.com\"\n    },\n    \"category\": {\n      \"id\": 1,\n      \"name\": \"Project\",\n      \"description\": \"งานโครงการ\"\n    }\n  }\n}"
+          "body": "{\n  \"message\": \"สำเร็จ\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"ทำ project-phase1\",\n    \"description\": \"ทำให้เสร็จภายในกำหนดเวลา\",\n    \"due_date\": \"2026-08-01\",\n    \"status\": \"in_progress\",\n    \"user_id\": 1,\n    \"category_id\": 1,\n    \"created_at\": \"2026-07-01T10:00:00.000Z\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"สมจิต\",\n      \"email\": \"somjit@example.com\"\n    },\n    \"category\": {\n      \"id\": 1,\n      \"name\": \"Project\"  }\n  }\n}"
         },
         {
           "name": "400 Bad Request - Invalid ID (Example)",
@@ -383,15 +313,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/abc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "abc"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "abc"]
             }
           },
           "status": "Bad Request",
@@ -413,15 +336,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "999999"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "999999"]
             }
           },
           "status": "Not Found",
@@ -459,15 +375,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks/3",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks",
-            "3"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks", "3"]
         },
         "description": "แทนที่ข้อมูลหลักของงาน ส่งฟิลด์บังคับให้ครบ"
       },
@@ -488,15 +397,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "OK",
@@ -527,15 +429,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "Conflict",
@@ -573,15 +468,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks/2",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks",
-            "2"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks", "2"]
         },
         "description": "แก้ไขเฉพาะฟิลด์ที่ส่งมา"
       },
@@ -602,15 +490,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "OK",
@@ -641,15 +522,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "Bad Request",
@@ -680,15 +554,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "Bad Request",
@@ -719,15 +586,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "999999"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "999999"]
             }
           },
           "status": "Not Found",
@@ -751,15 +611,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/v1/tasks/3",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "tasks",
-            "3"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks", "3"]
         },
         "description": "ลบงานตาม ID ควรใช้ ID ของงานทดสอบเพื่อไม่ลบข้อมูลงานจริง"
       },
@@ -771,15 +624,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "1"]
             }
           },
           "status": "OK",
@@ -801,15 +647,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/abc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "abc"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "abc"]
             }
           },
           "status": "Bad Request",
@@ -831,15 +670,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "tasks",
-                "999999"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "999999"]
             },
             "description": "ใช้ ID ที่ไม่มีอยู่จริง"
           },
@@ -864,14 +696,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/external/todo",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "external",
-            "todo"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "external", "todo"]
         },
         "description": "เรียก External API โดย Service มี retry/timeout และอาจคืน fallback เมื่อเรียกไม่สำเร็จ"
       },
@@ -883,14 +709,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/external/todo",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "external",
-                "todo"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "todo"]
             }
           },
           "status": "OK",
@@ -912,14 +732,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/external/todo",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "external",
-                "todo"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "external", "todo"]
             }
           },
           "status": "OK",

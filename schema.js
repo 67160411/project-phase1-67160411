@@ -10,7 +10,6 @@ const schema = buildSchema(`
   type Category {
     id: ID!
     name: String!
-    description: String
   }
 
   type Task {

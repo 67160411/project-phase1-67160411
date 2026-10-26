@@ -10,7 +10,7 @@ INSERT INTO users (name, email) VALUES
 INSERT INTO categories (name, description) VALUES
   ('Project', 'งานโปรเจกต์และโครงงานต่างๆ'),
   ('Homework', 'การบ้านและการเตรียมตัวสอบ'),
-  ('General', 'งานทั่วไปและธุระส่วนตัว');
+  ('Other', 'งานทั่วไปและธุระส่วนตัว');
 
 -- 3. เพิ่มข้อมูลงาน (Tasks) - 3 ระเบียน (ใช้อ้างอิง category_id แทนการพิมพ์ชื่อหมวดหมู่)
 INSERT INTO tasks (

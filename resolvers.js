@@ -1,98 +1,155 @@
-let users = [
-  {
-    id: 1,
-    name: "สมจิต",
-    email: "somjit@example.com",
-  },
-  {
-    id: 2,
-    name: "สมชาย",
-    email: "somchai@example.com",
-  },
-  {
-    id: 3,
-    name: "สมหญิง",
-    email: "somying@example.com",
-  },
-];
-let categories = [
-  {
-    id: 1,
-    name: "Project",
-    description: "งานโครงงานและโปรเจกต์",
-  },
-  {
-    id: 2,
-    name: "Homework",
-    description: "การบ้านและงานที่ได้รับมอบหมาย",
-  },
-];
-let tasks = [
-  {
-    id: 1,
-    title: "ทำ project-phase1",
-    description: "ทำให้เสร็จภายในกำหนดเวลา",
-    category: "Project",
-    dueDate: "2026-08-01",
-    status: "in_progress",
-    userId: 1,
-  },
-  {
-    id: 2,
-    title: "ส่งรายงานวิชา api",
-    description: "ค้นคว้าและเขียนรายงานวิชา api",
-    category: "Project",
-    dueDate: "2026-08-05",
-    status: "pending",
-    userId: 2,
-  },
-  {
-    id: 3,
-    title: "สรุปสอบวิชา api",
-    description: "เตรียมตัวสอบวิชา api ให้พร้อม",
-    category: "Homework",
-    dueDate: "2026-07-18",
-    status: "done",
-    userId: 3,
-  },
-];
+const pool = require("./src/db");
+
+// แปลงข้อมูล Task จาก MySQL ให้ตรงกับ GraphQL Schema
+function formatTask(row) {
+  if (!row) return null;
+
+  return {
+    ...row,
+    id: String(row.id),
+    dueDate:
+      row.dueDate instanceof Date
+        ? row.dueDate.toISOString().slice(0, 10)
+        : String(row.dueDate).slice(0, 10),
+    userId: String(row.userId),
+    categoryId: String(row.categoryId),
+  };
+}
+
+// ดึงข้อมูล Task พร้อม User และ Category
+async function getTaskWithRelations(task) {
+  if (!task) return null;
+
+  const [users] = await pool.query(
+    `SELECT id, name, email
+     FROM users
+     WHERE id = ?`,
+    [task.userId],
+  );
+
+  // ดึงเฉพาะ id และ name ของ Category
+  const [categories] = await pool.query(
+    `SELECT id, name
+     FROM categories
+     WHERE id = ?`,
+    [task.categoryId],
+  );
+
+  return {
+    ...formatTask(task),
+    user: users[0]
+      ? {
+          ...users[0],
+          id: String(users[0].id),
+        }
+      : null,
+    category: categories[0]
+      ? {
+          ...categories[0],
+          id: String(categories[0].id),
+        }
+      : null,
+  };
+}
 
 const resolvers = {
-  // ดึงรายการงานตาม ID พร้อมข้อมูล User ที่ผูกกัน
-  task: ({ id }, req) => {
-    const task = tasks.find((t) => t.id === Number(id));
-    if (!task) return null;
+  // ดึงงานตาม ID พร้อมข้อมูล User และ Category
+  task: async ({ id }) => {
+    const [rows] = await pool.query(
+      `SELECT
+         id,
+         title,
+         description,
+         due_date AS dueDate,
+         status,
+         user_id AS userId,
+         category_id AS categoryId
+       FROM tasks
+       WHERE id = ?`,
+      [Number(id)],
+    );
 
-    const user = users.find((u) => u.id === task.userId);
-    return { ...task, user };
+    return getTaskWithRelations(rows[0] ?? null);
   },
 
-  // ดึงรายการงานทั้งหมด
-  tasks: () => {
-    return tasks.map((task) => {
-      const user = users.find((u) => u.id === task.userId);
-      return { ...task, user };
-    });
+  // ดึงงานทั้งหมดพร้อมข้อมูล User และ Category
+  tasks: async () => {
+    const [rows] = await pool.query(
+      `SELECT
+         id,
+         title,
+         description,
+         due_date AS dueDate,
+         status,
+         user_id AS userId,
+         category_id AS categoryId
+       FROM tasks
+       ORDER BY id`,
+    );
+
+    return Promise.all(rows.map(getTaskWithRelations));
   },
 
-  // ดึงข้อมูล User ตาม ID
-  user: ({ id }) => {
-    return users.find((u) => u.id === Number(id));
+  // ดึงผู้ใช้ตาม ID
+  user: async ({ id }) => {
+    const [rows] = await pool.query(
+      `SELECT id, name, email
+       FROM users
+       WHERE id = ?`,
+      [Number(id)],
+    );
+
+    if (!rows[0]) return null;
+
+    return {
+      ...rows[0],
+      id: String(rows[0].id),
+    };
   },
 
-  // ดึงข้อมูล Users ทั้งหมด
-  users: () => {
-    return users;
+  // ดึงผู้ใช้ทั้งหมด
+  users: async () => {
+    const [rows] = await pool.query(
+      `SELECT id, name, email
+       FROM users
+       ORDER BY id`,
+    );
+
+    return rows.map((user) => ({
+      ...user,
+      id: String(user.id),
+    }));
   },
 
-  // ดึงข้อมูล Category ตาม ID
-  category: ({ id }) => {
-    return categories.find((c) => c.id === Number(id)) ?? null;
+  // ดึงหมวดหมู่ตาม ID
+  category: async ({ id }) => {
+    const [rows] = await pool.query(
+      `SELECT id, name
+       FROM categories
+       WHERE id = ?`,
+      [Number(id)],
+    );
+
+    if (!rows[0]) return null;
+
+    return {
+      ...rows[0],
+      id: String(rows[0].id),
+    };
   },
 
-  // ดึงข้อมูล Categories ทั้งหมด
-  categories: () => {
-    return categories;
+  // ดึงหมวดหมู่ทั้งหมด
+  categories: async () => {
+    const [rows] = await pool.query(
+      `SELECT id, name
+       FROM categories
+       ORDER BY id`,
+    );
+
+    return rows.map((category) => ({
+      ...category,
+      id: String(category.id),
+    }));
   },
 };
 
