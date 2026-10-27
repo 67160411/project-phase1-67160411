@@ -1,7 +1,8 @@
-const API_URL = "/api/v1/tasks";
-const DEFAULT_USER_ID = 1;
+const API_URL = "/api/v1/tasks"; // URL ของ API สำหรับจัดการงาน
+const DEFAULT_USER_ID = 1; // ID ของผู้ใช้เริ่มต้น
 
-//===== DOM Elements =====
+// เลือกองค์ประกอบจาก HTML มาเก็บไว้ในตัวแปร
+// เพื่อให้ JavaScript สามารถแสดงข้อมูล อ่านค่า หรือจัดการเหตุการณ์ได้
 const taskForm = document.querySelector("#taskForm");
 const taskList = document.querySelector("#taskList");
 const listMessage = document.querySelector("#listMessage");
@@ -20,9 +21,14 @@ const cancelDeleteButton = document.querySelector("#cancelDeleteButton");
 const confirmDeleteButton = document.querySelector("#confirmDeleteButton");
 
 // ===== Application State =====
+// เก็บรายการงานที่โหลดมาจาก Backend
 let tasks = [];
+// เก็บ ID ของงานที่กำลังแก้ไข
+// ถ้าเป็น null หมายถึงกำลังเพิ่มงานใหม่
 let editingTaskId = null;
+// ป้องกันการส่งฟอร์มซ้ำระหว่างที่กำลังบันทึก
 let isSubmitting = false;
+// เก็บ ID ของงานที่ผู้ใช้กำลังยืนยันการลบ
 let pendingDeleteTaskId = null;
 
 const STATUS_LABELS = {
@@ -52,6 +58,7 @@ function escapeHtml(value) {
   });
 }
 
+// แสดงข้อความแจ้งเตือน เช่น บันทึกสำเร็จหรือเกิดข้อผิดพลาด
 function showMessage(element, message, type = "info") {
   if (!element) return;
 
@@ -59,6 +66,7 @@ function showMessage(element, message, type = "info") {
   element.className = `notice ${type}`;
 }
 
+// ล้างข้อความแจ้งเตือนออกจากหน้าเว็บ
 function hideMessage(element) {
   if (!element) return;
 
@@ -66,7 +74,7 @@ function hideMessage(element) {
   element.className = "notice hidden";
 }
 
-// ===== API Request =====
+// ฟังก์ชันสำหรับส่งคำขอไปยัง API และจัดการกับการตอบกลับ
 async function requestApi(url, options = {}) {
   const response = await fetch(url, {
     ...options,
@@ -99,7 +107,7 @@ async function requestApi(url, options = {}) {
   return body;
 }
 
-// ===== Date Formatting =====
+// คือฟังก์ชันสำหรับจัดรูปแบบวันที่จากรูปแบบ "YYYY-MM-DD" เป็น "DD/MM/YYYY"
 function formatDate(value) {
   if (!value) return "ไม่ได้ระบุ";
 
@@ -111,6 +119,7 @@ function formatDate(value) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+// คือฟังก์ชันสำหรับตั้งค่าวันครบกำหนดเริ่มต้นในฟอร์มงานเป็นวันที่ปัจจุบัน
 function setDefaultDueDate() {
   const input = document.querySelector("#due_date");
 
@@ -122,7 +131,7 @@ function setDefaultDueDate() {
   input.value = localDate.toISOString().slice(0, 10);
 }
 
-// ===== API Status =====
+// เปลี่ยนข้อความบนหน้าเว็บตามผลการเชื่อมต่อ API
 function setApiStatus(online) {
   if (!apiStatus) return;
 
@@ -133,7 +142,7 @@ function setApiStatus(online) {
   apiStatus.className = `api-status ${online ? "online" : "offline"}`;
 }
 
-// ===== Statistics =====
+// คือฟังก์ชันสำหรับอัปเดตสถิติของงานใน UI คำนวณจำนวนงานทั้งหมด งานที่รอดำเนินการ
 function updateStats() {
   document.querySelector("#totalCount").textContent = tasks.length;
 
@@ -150,7 +159,7 @@ function updateStats() {
   ).length;
 }
 
-// ===== Render Task List =====
+// คือฟังก์ชันสำหรับแสดงรายการงานใน UI โดยกรองและจัดเรียงตามคำค้นหาและสถานะที่เลือก
 function renderTasks() {
   const keyword = searchInput.value.trim().toLowerCase();
   const selectedStatus = statusFilter.value;
@@ -197,6 +206,7 @@ function renderTasks() {
     return;
   }
 
+  // แสดงรายการงานที่กรองแล้ว
   taskList.innerHTML = filteredTasks
     .map((task) => {
       const id = Number(task.id);
@@ -286,7 +296,7 @@ function renderTasks() {
     .join("");
 }
 
-// ===== Load Tasks =====
+// คือฟังก์ชันสำหรับโหลดรายการงานจาก API และอัปเดต UI
 async function loadTasks() {
   taskList.innerHTML = '<div class="loading">กำลังโหลดรายการงาน...</div>';
 
@@ -321,7 +331,7 @@ async function loadTasks() {
   }
 }
 
-// ===== Validate Task Form =====
+// คือฟังก์ชันสำหรับตรวจสอบความถูกต้องของข้อมูลในฟอร์มงานก่อนส่งไปยัง API
 function validateTaskForm() {
   const title = document.querySelector("#title").value.trim();
   const dueDate = document.querySelector("#due_date").value;
@@ -362,7 +372,7 @@ function validateTaskForm() {
   };
 }
 
-// ===== Add / Edit Task =====
+// คือฟังก์ชันสำหรับจัดการเหตุการณ์เมื่อผู้ใช้ส่งฟอร์มงาน (เพิ่มหรือแก้ไขงาน)
 taskForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -387,6 +397,7 @@ taskForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  // ตรวจสอบว่ากำลังแก้ไขงานหรือเพิ่มงานใหม่
   const isEditing = editingTaskId !== null;
   const taskUrl = isEditing ? `${API_URL}/${editingTaskId}` : API_URL;
 
@@ -416,7 +427,7 @@ taskForm.addEventListener("submit", async (event) => {
   }
 });
 
-// ===== Edit Task =====
+// คือฟังก์ชันสำหรับเริ่มต้นการแก้ไขงาน โดยเติมข้อมูลของงานที่เลือกลงในฟอร์ม
 function startEditTask(task) {
   editingTaskId = Number(task.id);
 
@@ -441,7 +452,7 @@ function startEditTask(task) {
   });
 }
 
-// ===== Delete Confirmation Modal =====
+// คือฟังก์ชันสำหรับเปิดกล่องยืนยันการลบงาน โดยแสดงชื่อและ ID ของงานที่เลือก
 function openDeleteModal(task) {
   if (
     !deleteModal ||
@@ -472,6 +483,7 @@ function openDeleteModal(task) {
   cancelDeleteButton.focus();
 }
 
+// คือฟังก์ชันสำหรับปิดกล่องยืนยันการลบงาน และรีเซ็ตสถานะของงานที่กำลังลบ
 function closeDeleteModal() {
   if (!deleteModal) return;
 
@@ -482,6 +494,7 @@ function closeDeleteModal() {
   pendingDeleteTaskId = null;
 }
 
+// คือฟังก์ชันสำหรับลบงานจาก API และอัปเดต UI หลังจากลบสำเร็จ
 async function deleteTask(taskId) {
   try {
     const result = await requestApi(`${API_URL}/${taskId}`, {
@@ -498,16 +511,20 @@ async function deleteTask(taskId) {
   }
 }
 
+// เมื่อกดปุ่มยกเลิก ให้ปิดกล่องยืนยันการลบ
 cancelDeleteButton?.addEventListener("click", () => {
   closeDeleteModal();
 });
 
+// เมื่อคลิกส่วนที่กำหนด data-close-delete
+// ให้ปิดกล่องยืนยันการลบ
 deleteModal?.addEventListener("click", (event) => {
   if (event.target.closest("[data-close-delete]")) {
     closeDeleteModal();
   }
 });
 
+// เมื่อกดยืนยัน ให้ส่ง DELETE request ไปยัง API
 confirmDeleteButton?.addEventListener("click", async () => {
   if (pendingDeleteTaskId === null || confirmDeleteButton.disabled) {
     return;
@@ -539,18 +556,22 @@ confirmDeleteButton?.addEventListener("click", async () => {
   }
 });
 
+// เมื่อผู้ใช้กด Escape ขณะกล่องยืนยันเปิดอยู่
+// ให้ปิดกล่องยืนยันการลบ
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && deleteModal && !deleteModal.hidden) {
     closeDeleteModal();
   }
 });
 
-// ===== Task List Actions =====
+// คือฟังก์ชันสำหรับจัดการเหตุการณ์เมื่อผู้ใช้คลิกปุ่มในรายการงาน
+// เปลี่ยนสถานะ pending -> in_progress -> done
 taskList.addEventListener("click", async (event) => {
+  // ตรวจสอบว่าผู้ใช้คลิกปุ่มที่มี data-action หรือไม่
   const button = event.target.closest("button[data-action]");
-
   if (!button) return;
 
+  // ดึง ID และ action จาก data attributes ของปุ่ม
   const id = Number(button.dataset.id);
   const action = button.dataset.action;
 
@@ -594,6 +615,7 @@ taskList.addEventListener("click", async (event) => {
         return;
       }
 
+      // ส่งคำขอ PATCH ไปยัง API เพื่อเปลี่ยนสถานะของงาน
       const result = await requestApi(`${API_URL}/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -622,13 +644,16 @@ taskList.addEventListener("click", async (event) => {
   }
 });
 
-// ===== Search / Filter / Refresh =====
+// เมื่อคลิกปุ่มรีเฟรช ให้โหลดรายการงานจาก API ใหม่
 refreshButton.addEventListener("click", loadTasks);
 
+// เมื่อผู้ใช้พิมพ์คำค้นหา ให้กรองและแสดงรายการงานใหม่
 searchInput.addEventListener("input", renderTasks);
+
+// เมื่อผู้ใช้เปลี่ยนตัวกรองสถานะ ให้แสดงรายการใหม่
 statusFilter.addEventListener("change", renderTasks);
 
-// ===== Reset Form =====
+// คือฟังก์ชันสำหรับจัดการเหตุการณ์เมื่อผู้ใช้รีเซ็ตฟอร์มงาน (ยกเลิกการแก้ไข)
 taskForm.addEventListener("reset", () => {
   editingTaskId = null;
   submitLabel.textContent = "+ เพิ่มงาน";
@@ -637,6 +662,6 @@ taskForm.addEventListener("reset", () => {
   window.setTimeout(setDefaultDueDate, 0);
 });
 
-// ===== Initialize App =====
+// คือฟังก์ชันสำหรับจัดการเหตุการณ์เมื่อผู้ใช้คลิกปุ่มรีเฟรชรายการงาน
 setDefaultDueDate();
 loadTasks();

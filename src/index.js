@@ -29,7 +29,6 @@ const PORT = process.env.PORT || 3000;
 const openapiPath = path.join(__dirname, "..", "openapi.yaml");
 const openapiFile = fs.readFileSync(openapiPath, "utf8");
 const openapiDocument = YAML.parse(openapiFile);
-
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
 // ==========================================
@@ -37,7 +36,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 // ==========================================
 
 app.use("/app", express.static(path.join(__dirname, "../frontend")));
-
 app.get("/app", (req, res) => {
   res.redirect("/app/");
 });
@@ -61,10 +59,8 @@ app.use(
 
 app.use(morgan("dev"));
 
-// JSON parser สำหรับ REST API และ GraphQL แบบ JSON
 app.use(express.json({ limit: "10kb" }));
 
-// Text parser สำหรับ GraphQL raw body: Content-Type: application/graphql
 app.use(
   express.text({
     type: "application/graphql",
@@ -73,7 +69,7 @@ app.use(
 );
 
 // ==========================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS ฟังก์ชันช่วยตรวจสอบและตอบกลับข้อผิดพลาด
 // ==========================================
 
 function isValidId(id) {
@@ -261,6 +257,7 @@ app.get("/api/v1/tasks", async (req, res, next) => {
 });
 
 // 2. GET: งานตาม ID
+// ค้นหาข้อมูลงานพร้อมข้อมูลผู้ใช้และหมวดหมู่
 app.get("/api/v1/tasks/:id", async (req, res, next) => {
   const id = Number(req.params.id);
 
@@ -317,6 +314,10 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
 });
 
 // 3. POST: เพิ่มงานใหม่
+// ตรวจสอบว่ามี title, due_date, status, user_id และ category_id หรือไม่
+// ตรวจสอบว่า user_id และ category_id เป็นจำนวนเต็มบวกหรือไม่
+// ตรวจสอบว่าชื่องานซ้ำหรือไม่
+// ส่งการแจ้งเตือนหลังจากเพิ่มงานสำเร็จ
 app.post("/api/v1/tasks", async (req, res, next) => {
   const { title, description, due_date, status, user_id, category_id } =
     req.body || {};
@@ -498,6 +499,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     return sendError(res, 400, "NO_UPDATES", "กรุณาระบุข้อมูลที่ต้องการแก้ไข");
   }
 
+  // กำหนดฟิลด์ที่อนุญาตให้แก้ไขได้
   const allowedFields = [
     "title",
     "description",
@@ -507,6 +509,7 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     "category_id",
   ];
 
+  // ตรวจสอบว่ามีฟิลด์ที่ไม่อนุญาตหรือไม่
   const fields = Object.keys(updates);
   const invalidFields = fields.filter(
     (field) => !allowedFields.includes(field),
