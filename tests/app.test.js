@@ -1,4 +1,4 @@
-jest.mock("../src/db", () => ({
+jest.mock("../db", () => ({
   query: jest.fn(),
 }));
 
@@ -20,7 +20,7 @@ jest.mock("../src/services/external-api", () => ({
 }));
 
 const request = require("supertest");
-const pool = require("../src/db");
+const pool = require("../db");
 const { getExternalTodo } = require("../src/services/external-api");
 const app = require("../src/index");
 
@@ -291,24 +291,44 @@ describe("TaskFlow API", () => {
     });
 
     test("POST /graphql returns tasks", async () => {
+      pool.query
+        .mockResolvedValueOnce([
+          [
+            {
+              id: 101,
+              title: "GraphQL test task",
+              description: "Test task",
+              dueDate: "2026-11-15",
+              status: "pending",
+              userId: 3,
+              categoryId: 2,
+            },
+          ],
+        ])
+        .mockResolvedValueOnce([
+          [{ id: 3, name: "Test User", email: "test@example.com" }],
+        ])
+        .mockResolvedValueOnce([[{ id: 2, name: "Study" }]]);
+
       const response = await request(app)
         .post("/graphql")
         .send({
           query: `
-            {
-              tasks {
-                id
-                title
-                status
-              }
-            }
-          `,
+      {
+        tasks {
+          id
+          title
+          status
+        }
+      }
+    `,
         });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data).toHaveProperty("tasks");
       expect(Array.isArray(response.body.data.tasks)).toBe(true);
+      expect(response.body.data.tasks[0].title).toBe("GraphQL test task");
     });
 
     test("POST /graphql returns a GraphQL error for an unknown field", async () => {
