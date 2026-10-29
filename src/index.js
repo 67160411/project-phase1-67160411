@@ -29,6 +29,7 @@ const PORT = process.env.PORT || 3000;
 const openapiPath = path.join(__dirname, "..", "openapi.yaml");
 const openapiFile = fs.readFileSync(openapiPath, "utf8");
 const openapiDocument = YAML.parse(openapiFile);
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
 // ==========================================
@@ -36,7 +37,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiDocument));
 // ==========================================
 
 app.use("/app", express.static(path.join(__dirname, "../frontend")));
-app.get("/app", (req, res) => {
+app.get("/app", function (req, res) {
   res.redirect("/app/");
 });
 
@@ -69,7 +70,8 @@ app.use(
 );
 
 // ==========================================
-// HELPER FUNCTIONS ฟังก์ชันช่วยตรวจสอบและตอบกลับข้อผิดพลาด
+// HELPER FUNCTIONS
+// ฟังก์ชันช่วยตรวจสอบและตอบกลับข้อผิดพลาด
 // ==========================================
 
 function isValidId(id) {
@@ -114,11 +116,18 @@ async function notifySafely(task, event) {
 }
 
 function isForeignKeyError(err) {
-  return (
-    err &&
-    (err.code === "ER_NO_REFERENCED_ROW_2" ||
-      err.code === "ER_NO_REFERENCED_ROW")
-  );
+  if (!err) {
+    return false;
+  }
+
+  if (
+    err.code === "ER_NO_REFERENCED_ROW_2" ||
+    err.code === "ER_NO_REFERENCED_ROW"
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function handleForeignKeyError(res, err) {
@@ -142,29 +151,43 @@ function handleForeignKeyError(res, err) {
 // สำหรับ Content-Type: application/graphql ให้แปลงข้อความเป็น object ก่อน
 app.use(
   "/graphql",
-  (req, res, next) => {
+  function (req, res, next) {
     if (typeof req.body === "string") {
       req.body = { query: req.body };
     }
+
     next();
   },
-  graphqlHTTP((req) => ({
-    schema,
-    rootValue: resolvers,
-    graphiql: true,
-    customFormatErrorFn: (error) => ({
-      message: error.message,
-      ...(error.locations ? { locations: error.locations } : {}),
-      ...(error.path ? { path: error.path } : {}),
-    }),
-  })),
+  graphqlHTTP(function (req) {
+    return {
+      schema: schema,
+      rootValue: resolvers,
+      graphiql: true,
+
+      customFormatErrorFn: function (error) {
+        const result = {
+          message: error.message,
+        };
+
+        if (error.locations) {
+          result.locations = error.locations;
+        }
+
+        if (error.path) {
+          result.path = error.path;
+        }
+
+        return result;
+      },
+    };
+  }),
 );
 
 // ==========================================
 // ROOT ENDPOINT
 // ==========================================
 
-app.get("/", (req, res) => {
+app.get("/", function (req, res) {
   return res.status(200).json({
     message: "project-phase1-67160411 พร้อมใช้งาน",
     endpoints: {
@@ -181,7 +204,7 @@ app.get("/", (req, res) => {
 // EXTERNAL API WITH RETRY / TIMEOUT / FALLBACK
 // ==========================================
 
-app.get("/api/external/todo", async (req, res) => {
+app.get("/api/external/todo", async function (req, res) {
   try {
     const result = await getExternalTodo();
 
@@ -250,7 +273,10 @@ app.get("/api/v1/tasks", async (req, res, next) => {
 
     const [rows] = await pool.query(query, params);
 
-    return res.status(200).json({ message: "สำเร็จ", data: rows });
+    return res.status(200).json({
+      message: "สำเร็จ",
+      data: rows,
+    });
   } catch (err) {
     return next(err);
   }
@@ -280,13 +306,15 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
       WHERE t.id = ?
     `;
 
-    const [rows] = await pool.query(query, [id]);
+    const result = await pool.query(query, [id]);
+    const rows = result[0];
 
     if (rows.length === 0) {
       return sendError(res, 404, "NOT_FOUND", "ไม่พบข้อมูลงาน");
     }
 
     const row = rows[0];
+
     const taskData = {
       id: row.id,
       title: row.title,
@@ -307,7 +335,10 @@ app.get("/api/v1/tasks/:id", async (req, res, next) => {
         : null,
     };
 
-    return res.status(200).json({ message: "สำเร็จ", data: taskData });
+    return res.status(200).json({
+      message: "สำเร็จ",
+      data: taskData,
+    });
   } catch (err) {
     return next(err);
   }
@@ -386,10 +417,16 @@ app.post("/api/v1/tasks", async (req, res, next) => {
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
-    if (duplicateResponse) return duplicateResponse;
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
 
     const foreignKeyResponse = handleForeignKeyError(res, err);
-    if (foreignKeyResponse) return foreignKeyResponse;
+
+    if (foreignKeyResponse) {
+      return foreignKeyResponse;
+    }
 
     return next(err);
   }
@@ -472,10 +509,16 @@ app.put("/api/v1/tasks/:id", async (req, res, next) => {
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
-    if (duplicateResponse) return duplicateResponse;
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
 
     const foreignKeyResponse = handleForeignKeyError(res, err);
-    if (foreignKeyResponse) return foreignKeyResponse;
+
+    if (foreignKeyResponse) {
+      return foreignKeyResponse;
+    }
 
     return next(err);
   }
@@ -536,28 +579,28 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
     );
   }
 
-  if (
-    Object.prototype.hasOwnProperty.call(updates, "user_id") &&
-    !isValidId(Number(updates.user_id))
-  ) {
-    return sendError(
-      res,
-      400,
-      "INVALID_USER_ID",
-      "user_id ต้องเป็นจำนวนเต็มบวก",
-    );
+  // ตรวจสอบ user_id หากส่งมาแก้ไข
+  if (Object.prototype.hasOwnProperty.call(updates, "user_id")) {
+    if (!isValidId(Number(updates.user_id))) {
+      return sendError(
+        res,
+        400,
+        "INVALID_USER_ID",
+        "user_id ต้องเป็นจำนวนเต็มบวก",
+      );
+    }
   }
 
-  if (
-    Object.prototype.hasOwnProperty.call(updates, "category_id") &&
-    !isValidId(Number(updates.category_id))
-  ) {
-    return sendError(
-      res,
-      400,
-      "INVALID_CATEGORY_ID",
-      "category_id ต้องเป็นจำนวนเต็มบวก",
-    );
+  // ตรวจสอบ category_id หากส่งมาแก้ไข
+  if (Object.prototype.hasOwnProperty.call(updates, "category_id")) {
+    if (!isValidId(Number(updates.category_id))) {
+      return sendError(
+        res,
+        400,
+        "INVALID_CATEGORY_ID",
+        "category_id ต้องเป็นจำนวนเต็มบวก",
+      );
+    }
   }
 
   try {
@@ -570,38 +613,56 @@ app.patch("/api/v1/tasks/:id", async (req, res, next) => {
       return sendError(res, 404, "NOT_FOUND", "ไม่พบข้อมูลงาน");
     }
 
-    const setClause = fields.map((field) => `\`${field}\` = ?`).join(", ");
-    const values = fields.map((field) => {
-      if (field === "title") return updates[field].trim();
-      if (field === "user_id" || field === "category_id") {
-        return Number(updates[field]);
+    // สร้างส่วน SET ของคำสั่ง SQL และค่าที่จะบันทึก
+    const setParts = [];
+    const values = [];
+
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      setParts.push("`" + field + "` = ?");
+
+      if (field === "title") {
+        values.push(updates[field].trim());
+      } else if (field === "user_id" || field === "category_id") {
+        values.push(Number(updates[field]));
+      } else {
+        values.push(updates[field]);
       }
-      return updates[field];
-    });
+    }
 
-    await pool.query(`UPDATE tasks SET ${setClause} WHERE id = ?`, [
-      ...values,
+    const setClause = setParts.join(", ");
+    values.push(id);
+
+    const updateQuery = "UPDATE tasks SET " + setClause + " WHERE id = ?";
+    await pool.query(updateQuery, values);
+
+    // ดึงข้อมูลงานหลังจากแก้ไข
+    const updatedResult = await pool.query("SELECT * FROM tasks WHERE id = ?", [
       id,
     ]);
 
-    const [updatedRows] = await pool.query("SELECT * FROM tasks WHERE id = ?", [
-      id,
-    ]);
-
+    const updatedRows = updatedResult[0];
     const updatedTask = updatedRows[0];
+
     const notification = await notifySafely(updatedTask, "UPDATED");
 
     return res.status(200).json({
       message: "แก้ไขข้อมูลงานสำเร็จ",
       data: updatedTask,
-      notification,
+      notification: notification,
     });
   } catch (err) {
     const duplicateResponse = handleDuplicateTitle(res, err);
-    if (duplicateResponse) return duplicateResponse;
+
+    if (duplicateResponse) {
+      return duplicateResponse;
+    }
 
     const foreignKeyResponse = handleForeignKeyError(res, err);
-    if (foreignKeyResponse) return foreignKeyResponse;
+
+    if (foreignKeyResponse) {
+      return foreignKeyResponse;
+    }
 
     return next(err);
   }

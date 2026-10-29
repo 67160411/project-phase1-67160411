@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 USE project_phase1;
 
 -- 1. เพิ่มข้อมูลผู้ใช้ (Users) - 3 ระเบียน
